@@ -24,7 +24,7 @@ cd syntex-lab
 cp .env.example .env
 
 # 3. Start everything — one command
-docker compose up --build
+docker-compose up --build
 
 # App runs at:  http://localhost:3000
 # Via Nginx:    http://localhost:80   (add /etc/hosts entries below)
