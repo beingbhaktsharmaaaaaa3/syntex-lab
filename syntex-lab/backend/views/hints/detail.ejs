@@ -1,0 +1,150 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Hints</span>
+      <div class="header-right">
+        <a href="/hints" class="btn btn-secondary btn-sm">← All Hints</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/hints">Hints</a><span>›</span><span><%= hint.category %></span><span>›</span><span><%= hint.title %></span></div>
+
+      <div style="display:flex;gap:24px;align-items:start;">
+        <div style="flex:1;min-width:0;">
+          <!-- Header card -->
+          <div class="card mb-4">
+            <div class="card-body" style="padding:24px;">
+              <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;">
+                  <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;"><%= hint.category %></div>
+                  <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;"><%= hint.title %></h2>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="badge badge-<%= {easy:'success',medium:'warning',hard:'danger'}[hint.difficulty]||'gray' %>"><%= hint.difficulty %></span>
+                    <span style="font-size:12px;color:var(--text-muted);">Endpoint: <code style="font-size:11px;"><%= hint.endpoint %></code></span>
+                    <span style="font-size:12px;color:var(--text-muted);">File: <code style="font-size:11px;"><%= hint.file %></code></span>
+                  </div>
+                </div>
+                <!-- Progress dots -->
+                <div style="text-align:center;">
+                  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;">
+                    <% [1,2,3].forEach(l => { %>
+                    <div style="width:16px;height:16px;border-radius:50%;background:<%= unlockedLevels.includes(l)?'var(--success)':'var(--border)' %>;border:2px solid <%= unlockedLevels.includes(l)?'var(--success)':'var(--border)' %>;transition:all 0.2s;" title="Level <%=l%>"></div>
+                    <% }) %>
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);"><%= unlockedLevels.length %>/3 unlocked</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hint levels -->
+          <% hint.hints.forEach((hintText, idx) => { %>
+          <% const level = idx + 1; %>
+          <% const isUnlocked = unlockedLevels.includes(level); %>
+
+          <div class="card mb-4" style="border-color: <%= isUnlocked ? 'var(--success)' : 'var(--border)' %>;">
+            <div class="card-header" style="background:<%= isUnlocked ? 'var(--success-bg)' : 'var(--page-bg)' %>;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:28px;height:28px;border-radius:50%;background:<%= isUnlocked?'var(--success)':'var(--border)' %>;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
+                  <%= isUnlocked ? '✓' : level %>
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">
+                    <%= ['Very Small Hint','Specific Direction','Exploitation Path'][idx] %>
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);">Level <%= level %> of 3</div>
+                </div>
+              </div>
+              <% if(isUnlocked) { %>
+                <span class="badge badge-success">Unlocked</span>
+              <% } else { %>
+                <span class="badge badge-gray">Locked</span>
+              <% } %>
+            </div>
+            <div class="card-body">
+              <% if(isUnlocked) { %>
+                <p style="font-size:14px;line-height:1.7;"><%= hintText %></p>
+              <% } else { %>
+                <div style="text-align:center;padding:20px 0;">
+                  <% if(level === 1 || unlockedLevels.includes(level - 1)) { %>
+                    <!-- Can unlock this level -->
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+                      Try the vulnerability yourself first. Unlock this hint only if you're stuck.
+                    </p>
+                    <form action="/hints/<%= slug %>/<%= level %>/unlock" method="POST" style="display:inline;">
+                      <button type="submit" class="btn btn-secondary">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                        Unlock Level <%= level %> Hint
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <p style="font-size:12px;color:var(--text-muted);">Unlock the previous hint first.</p>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+          <% }) %>
+
+          <!-- Full solution link (all hints unlocked) -->
+          <% if(unlockedLevels.length === hint.hints.length) { %>
+          <div class="card" style="border-color:var(--primary);">
+            <div class="card-header" style="background:#EFF6FF;">
+              <h3>All Hints Unlocked</h3>
+              <span class="badge badge-info">Solution Available</span>
+            </div>
+            <div class="card-body" style="text-align:center;padding:20px;">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">You've unlocked all hints. The full exploitation writeup is in SOLUTIONS.md — or view it here.</p>
+              <a href="<%= hint.solution %>" class="btn btn-primary">View Full Solution</a>
+            </div>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Sidebar -->
+        <aside style="width:240px;flex-shrink:0;">
+          <div class="card mb-4">
+            <div class="card-header"><h3>Approach</h3></div>
+            <div class="card-body" style="font-size:12px;line-height:1.8;color:var(--text-muted);">
+              <ol style="padding-left:16px;">
+                <li>Try the vulnerability yourself first.</li>
+                <li>Unlock hints only when stuck.</li>
+                <li>Use Burp Suite to intercept requests.</li>
+                <li>Document your exploitation steps.</li>
+                <li>Submit a report when done.</li>
+              </ol>
+            </div>
+          </div>
+          <div class="card mb-4">
+            <div class="card-header"><h3>Related Tools</h3></div>
+            <div class="card-body" style="font-size:12px;display:flex;flex-direction:column;gap:6px;">
+              <% const toolMap = {
+                'SQLi':['sqlmap','Burp Suite','Manual payloads'],
+                'XSS':['dalfox','XSS Hunter','Burp Suite'],
+                'IDOR':['Burp Autorize','Manual ID fuzzing'],
+                'SSRF':['SSRFmap','interactsh','curl'],
+                'JWT':['jwt_tool','jwt.io','hashcat'],
+                'LFI':['Manual traversal','ffuf'],
+                'Command Injection':['Manual payloads','Burp Suite'],
+              };
+              const tools = toolMap[hint.category] || ['Burp Suite','curl','Browser DevTools'];
+              %>
+              <% tools.forEach(t => { %>
+              <span style="background:var(--page-bg);padding:4px 8px;border-radius:4px;border:1px solid var(--border);"><%= t %></span>
+              <% }) %>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>After Exploiting</h3></div>
+            <div class="card-body" style="font-size:12px;">
+              <p style="color:var(--text-muted);margin-bottom:10px;">Found it? Document and submit a report.</p>
+              <a href="/reports/new" class="btn btn-primary btn-sm w-100">Submit Report</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

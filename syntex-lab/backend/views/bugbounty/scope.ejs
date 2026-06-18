@@ -1,0 +1,115 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Program Scope</span>
+      <div class="header-right"><a href="/reports/new" class="btn btn-primary btn-sm">+ Submit Report</a>
+        <% if (locals.user) { %><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a><% } %>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/bug-bounty">Bug Bounty</a><span>›</span><span>Scope</span></div>
+
+      <div class="grid-2" style="align-items:start;gap:24px;">
+        <div>
+          <div class="card mb-4">
+            <div class="card-header" style="background:#F0FDF4;"><h3 style="color:#15803D;">✓ In-Scope Assets</h3></div>
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>Asset</th><th>Type</th><th>Coverage</th></tr></thead>
+                <tbody>
+                  <% [
+                    {a:'syntex.local',t:'Web App','c':'Full — all features, all endpoints'},
+                    {a:'api.syntex.local',t:'API',c:'REST API v1 + v2, all methods'},
+                    {a:'admin.syntex.local',t:'Admin Panel',c:'Full — including bypass testing'},
+                    {a:'staging.syntex.local',t:'Staging',c:'All features — may have extra vulns'},
+                    {a:'dev.syntex.local',t:'Development',c:'All features — verbose errors'},
+                    {a:'*.syntex.local',t:'Wildcard',c:'Any unlisted subdomain'},
+                    {a:'localhost:3000',t:'Direct',c:'Direct app access (bypass nginx)'},
+                    {a:'localhost:5432',t:'Database',c:'PostgreSQL — if reachable via SSRF'},
+                  ].forEach(r => { %>
+                  <tr>
+                    <td><code style="font-size:12px;"><%= r.a %></code></td>
+                    <td><span class="badge badge-info" style="font-size:10px;"><%= r.t %></span></td>
+                    <td style="font-size:12px;"><%= r.c %></td>
+                  </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header" style="background:#FEF2F2;"><h3 style="color:#B91C1C;">✗ Out-of-Scope</h3></div>
+            <div class="card-body" style="font-size:13px;">
+              <% [
+                {item:'mail.syntex.local',why:'Email infrastructure — not part of the web app'},
+                {item:'vpn.syntex.local',why:'VPN gateway — out of testing scope'},
+                {item:'backup.syntex.local',why:'Backup service — dead in this lab'},
+                {item:'DoS / DDoS',why:'Any availability attack — zero tolerance'},
+                {item:'Social engineering',why:'No phishing of other lab users'},
+                {item:'Physical security',why:'Not in scope for this lab'},
+                {item:'Third-party services',why:'Stripe, AWS, etc. are not our assets'},
+                {item:'Automated scanning without PoC',why:'Tool output ≠ a valid report'},
+              ].forEach(r => { %>
+              <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);">
+                <span style="color:var(--danger);font-weight:700;flex-shrink:0;">✗</span>
+                <div><strong style="font-size:12px;"><%= r.item %></strong><div style="font-size:11px;color:var(--text-muted);"><%= r.why %></div></div>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-4">
+            <div class="card-header"><h3>Valid vs Invalid Reports</h3></div>
+            <div class="card-body" style="font-size:13px;">
+              <p style="font-weight:700;color:var(--success);margin-bottom:8px;">✓ Valid Examples</p>
+              <% [
+                'SQL injection in /login that bypasses authentication',
+                'Stored XSS in comments that fires in admin\'s browser',
+                'IDOR on /orders/:id exposing other users\' PII',
+                'SSRF via /api/v1/fetch reaching internal services',
+                '/.env accessible without authentication (credentials exposed)',
+                'JWT alg:none accepted — forge any user token',
+              ].forEach(e => { %><div style="display:flex;gap:8px;margin-bottom:6px;"><span style="color:var(--success);">•</span><span><%= e %></span></div><% }) %>
+
+              <p style="font-weight:700;color:var(--danger);margin-top:16px;margin-bottom:8px;">✗ Invalid / Won't Fix</p>
+              <% [
+                'Missing security headers (CSP, HSTS) — informative only',
+                '"User can see their own data" — not a vulnerability',
+                'Self-XSS (only affects yourself)',
+                'Rate limit on non-sensitive endpoints',
+                'SSL/TLS configuration issues on lab environment',
+                'Clickjacking on non-sensitive pages',
+              ].forEach(e => { %><div style="display:flex;gap:8px;margin-bottom:6px;"><span style="color:var(--danger);">•</span><span><%= e %></span></div><% }) %>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>Rules of Engagement</h3></div>
+            <div class="card-body" style="font-size:13px;line-height:1.8;">
+              <ol style="padding-left:20px;">
+                <li>Test only against this local lab instance.</li>
+                <li>Do not attempt to access other users' real data outside the lab.</li>
+                <li>Do not run automated scanners against production systems.</li>
+                <li>Report vulnerabilities before discussing them publicly.</li>
+                <li>Do not perform destructive actions (drop tables, delete users).</li>
+                <li>One report per unique vulnerability — do not spam variants.</li>
+                <li>Good faith testing is always respected here.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Duplicate Report Policy</h3></div>
+            <div class="card-body" style="font-size:13px;line-height:1.7;">
+              <p>If your report is marked <strong>Duplicate</strong>, it means someone else reported the same vulnerability first. The original reporter receives credit and bounty.</p>
+              <p style="margin-top:8px;">A duplicate report is still useful — it confirms the severity and adds context. Duplicates are always acknowledged and the reporter is added to the <a href="/hall-of-fame" style="color:var(--accent);">Hall of Fame</a> if this is their first finding.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,105 @@
+<%- include('../partials/program-navbar') %>
+<div class="prog-page">
+  <% const sevColors={critical:'prog-badge-red',high:'prog-badge-yellow',medium:'prog-badge-blue',low:'prog-badge-green',info:'prog-badge-gray'};
+     const statColors={new:'prog-badge-blue',needs_more_info:'prog-badge-yellow',accepted:'prog-badge-green',duplicate:'prog-badge-gray',informative:'prog-badge-blue',not_applicable:'prog-badge-red',resolved:'prog-badge-green'};
+     const statLabels={new:'🆕 New',needs_more_info:'ℹ️ Needs More Info',accepted:'✅ Accepted',duplicate:'🔄 Duplicate',informative:'ℹ️ Informative',not_applicable:'❌ N/A',resolved:'✔️ Resolved'}; %>
+
+  <% if(justVerified){ %>
+  <div style="background:#25855A;color:#fff;border-radius:8px;padding:20px 24px;margin-bottom:20px;display:flex;gap:16px;align-items:center;">
+    <span style="font-size:32px;">🎉</span>
+    <div><div style="font-size:16px;font-weight:800;">Flag Verified! Report Auto-Accepted.</div>
+    <div style="opacity:0.85;font-size:13px;"><%= report.flag_title ? '+'+report.flag_points+' pts for '+report.flag_title : 'Well done!' %></div></div>
+  </div>
+  <% } %>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:0;">
+
+      <% if(report.flag_slug){ %>
+      <div class="prog-card" style="margin-bottom:16px;border-color:<%= report.flag_verified?'#25855A':'#ECC94B' %>;border-width:2px;">
+        <div class="prog-card-body" style="display:flex;align-items:center;gap:12px;background:<%= report.flag_verified?'#F0FFF4':'#FFFFF0' %>;">
+          <span style="font-size:24px;"><%= report.flag_verified?'✅':'⚠️' %></span>
+          <div>
+            <div style="font-weight:700;color:<%= report.flag_verified?'#22543D':'#744210' %>;font-size:14px;"><%= report.flag_verified?'Flag Verified — Vulnerability Confirmed':'Flag Submitted — Not Matched' %></div>
+            <div style="font-size:12px;color:var(--prog-muted);"><%= report.flag_verified?'Vulnerability: '+report.flag_title+' · +'+report.flag_points+' pts':'Check you copied the flag exactly and selected the correct vulnerability.' %></div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="prog-card" style="margin-bottom:16px;">
+        <div class="prog-card-header" style="flex-wrap:wrap;gap:8px;">
+          <div>
+            <h2 style="font-size:17px;font-weight:800;margin-bottom:8px;"><%= report.title %></h2>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="prog-badge <%= sevColors[report.severity]||'prog-badge-gray' %>"><%= report.severity %></span>
+              <span class="prog-badge <%= statColors[report.status]||'prog-badge-gray' %>"><%= statLabels[report.status] %></span>
+              <span class="prog-badge prog-badge-gray"><%= report.vuln_type.replace(/_/g,' ') %></span>
+              <% if(report.flag_verified){ %><span class="prog-badge prog-badge-green">🚩 Verified</span><% } %>
+            </div>
+          </div>
+          <% if(report.bounty_amount>0){ %><div style="text-align:right;"><div style="font-size:24px;font-weight:800;color:#25855A;">$<%= parseFloat(report.bounty_amount).toLocaleString() %></div><div style="font-size:11px;color:var(--prog-muted);">Bounty</div></div><% } %>
+        </div>
+        <div class="prog-card-body">
+          <div style="font-size:12px;color:var(--prog-muted);margin-bottom:18px;">By <strong><%= report.reporter %></strong> · <%= new Date(report.created_at).toLocaleString() %> · <code style="font-size:11px;"><%= report.affected_url %></code></div>
+          <% [['Steps to Reproduce',report.steps],['Impact',report.impact],['Suggested Fix',report.suggested_fix]].forEach(([h,b]) => { if(!b) return; %>
+          <div style="margin-bottom:18px;"><div style="font-size:11px;font-weight:700;color:var(--prog-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;"><%= h %></div>
+          <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;background:#F7FAFC;padding:12px;border-radius:6px;border:1px solid #EDF2F7;"><%= b %></div></div>
+          <% }) %>
+          <% if(report.proof_of_concept){ %>
+          <div style="margin-bottom:18px;"><div style="font-size:11px;font-weight:700;color:var(--prog-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Proof of Concept</div>
+          <pre style="font-size:12px;max-height:260px;overflow-y:auto;background:#1A202C;color:#68D391;padding:16px;border-radius:6px;"><%= report.proof_of_concept %></pre></div>
+          <% } %>
+        </div>
+      </div>
+
+      <% if(report.triage_notes){ %>
+      <div class="prog-card" style="border-color:#C6F6D5;border-width:2px;">
+        <div class="prog-card-header" style="background:#F0FFF4;"><h3 style="color:#22543D;">Triage Response</h3><span style="font-size:12px;color:var(--prog-muted);"><%= report.triager||'Staff' %></span></div>
+        <div class="prog-card-body"><p style="font-size:13px;line-height:1.7;white-space:pre-wrap;"><%= report.triage_notes %></p></div>
+      </div>
+      <% } %>
+    </div>
+
+    <aside style="width:260px;flex-shrink:0;">
+      <% if(isStaff){ %>
+      <div class="prog-card" style="border-color:#ECC94B;border-width:2px;margin-bottom:16px;">
+        <div class="prog-card-header" style="background:#FFFFF0;"><h3>Triage Panel</h3><span class="prog-badge prog-badge-yellow">Staff</span></div>
+        <div class="prog-card-body">
+          <form action="/program/reports/<%= report.id %>/triage" method="POST">
+            <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">STATUS</label>
+            <select name="status" required style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;">
+              <% ['new','needs_more_info','accepted','duplicate','informative','not_applicable','resolved'].forEach(s=>{ %>
+              <option value="<%= s %>" <%= report.status===s?'selected':'' %>><%= statLabels[s] %></option>
+              <% }) %>
+            </select></div>
+            <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">BOUNTY ($)</label>
+            <input type="number" name="bounty_amount" min="0" step="50" value="<%= report.bounty_amount||0 %>" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;box-sizing:border-box;"></div>
+            <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">DUPLICATE OF #</label>
+            <input type="number" name="duplicate_of" value="<%= report.duplicate_of||'' %>" placeholder="Leave blank if not dup" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;box-sizing:border-box;"></div>
+            <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">NOTES</label>
+            <textarea name="triage_notes" rows="4" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;box-sizing:border-box;resize:vertical;"><%= report.triage_notes||'' %></textarea></div>
+            <button type="submit" class="prog-btn prog-btn-green" style="width:100%;">Update Report</button>
+          </form>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="prog-card">
+        <div class="prog-card-header"><h3>Report Info</h3></div>
+        <div class="prog-card-body">
+          <table style="font-size:12px;width:100%;border-collapse:collapse;">
+            <% [['ID','#'+report.id],['Reporter',report.reporter],['Submitted',new Date(report.created_at).toLocaleDateString()],['Updated',new Date(report.updated_at).toLocaleDateString()],['Verified',report.flag_verified?'✅ Yes':'⏳ Pending'],['Bounty',report.bounty_amount>0?'$'+parseFloat(report.bounty_amount).toLocaleString():'—']].forEach(([k,v])=>{ %>
+            <tr><td style="padding:5px 0;color:var(--prog-muted);"><%= k %></td><td style="padding:5px 0;font-weight:600;"><%= v %></td></tr>
+            <% }) %>
+          </table>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
+            <a href="/program/submit" class="prog-btn prog-btn-green" style="text-align:center;justify-content:center;">+ New Report</a>
+            <a href="/program/reports" class="prog-btn prog-btn-outline" style="text-align:center;justify-content:center;">← All Reports</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<%- include('../partials/program-footer') %>

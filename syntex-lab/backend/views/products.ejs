@@ -1,0 +1,61 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Products &amp; Licenses</span>
+      <div class="header-right">
+        <form action="/search" method="GET" style="display:flex;">
+          <div class="search-bar">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="header-search" name="q" placeholder="Search products…">
+          </div>
+        </form>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header"><h1>Product Catalog</h1><p>Syntex enterprise software modules — all available on monthly or annual license.</p></div>
+
+      <!-- VULNERABILITY: Filter params injected directly into SQL — practice SQLi here -->
+      <div style="display:flex;gap:16px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+        <form action="/products" method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select name="category" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff;">
+            <option value="all" <%= filters.category==='all'||!filters.category?'selected':'' %>>All Categories</option>
+            <% categories.forEach(c => { %><option value="<%= c %>" <%= filters.category===c?'selected':'' %>><%= c.charAt(0).toUpperCase()+c.slice(1) %></option><% }) %>
+          </select>
+          <input type="number" name="min_price" placeholder="Min $" value="<%= filters.min_price||'' %>" style="width:90px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+          <input type="number" name="max_price" placeholder="Max $" value="<%= filters.max_price||'' %>" style="width:90px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+          <select name="sort" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff;">
+            <option value="">Sort By</option>
+            <option value="price_asc" <%= filters.sort==='price_asc'?'selected':'' %>>Price ↑</option>
+            <option value="price_desc" <%= filters.sort==='price_desc'?'selected':'' %>>Price ↓</option>
+            <option value="name" <%= filters.sort==='name'?'selected':'' %>>Name A–Z</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+          <a href="/products" class="btn btn-secondary btn-sm">Clear</a>
+        </form>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:auto;"><%= products.length %> products found</span>
+      </div>
+
+      <% if (products.length === 0) { %>
+        <div class="empty-state"><h3>No products found</h3><p>Try adjusting your filters.</p></div>
+      <% } else { %>
+      <div class="product-grid">
+        <% products.forEach(p => { %>
+        <div class="product-card">
+          <div class="product-card-cat"><%= p.category %></div>
+          <div class="product-card-name"><%= p.name %></div>
+          <div class="product-card-desc"><%= p.short_desc %></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">SKU: <%= p.sku %> · v<%= p.version %></div>
+          <div class="product-card-price">$<%= parseFloat(p.price).toFixed(2) %> <small>/ <%= p.license_type %></small></div>
+          <div class="product-card-footer">
+            <a href="/products/<%= p.id %>" class="btn btn-secondary btn-sm">View Details</a>
+            <a href="/orders" class="btn btn-primary btn-sm">Purchase</a>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>

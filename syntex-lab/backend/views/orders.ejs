@@ -1,0 +1,60 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Orders &amp; Licenses</span>
+      <div class="header-right">
+        <a href="/products" class="btn btn-primary btn-sm">+ New Order</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header"><h1>My Orders</h1><p>All software licenses and subscriptions on your account.</p></div>
+      <!-- VULNERABILITY: Apply coupon with no per-user reuse check -->
+      <div class="card mb-4" style="max-width:480px;">
+        <div class="card-header"><h3>Apply Coupon Code</h3></div>
+        <div class="card-body">
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="coupon_code" placeholder="e.g. SAVE20" style="flex:1;">
+            <input type="number" id="coupon_order" placeholder="Order ID">
+            <button class="btn btn-primary btn-sm" onclick="applyCoupon()">Apply</button>
+          </div>
+          <div id="coupon_result" style="font-size:12px;margin-top:8px;color:var(--text-muted);"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Invoice #</th><th>Product</th><th>Qty</th><th>Total</th><th>Coupon</th><th>Status</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+              <% if (orders.length === 0) { %>
+                <tr><td colspan="8" class="text-center text-muted" style="padding:32px;">No orders yet. <a href="/products">Browse products →</a></td></tr>
+              <% } else { %>
+              <% orders.forEach(o => { %>
+              <tr>
+                <td><a href="/orders/<%= o.id %>" style="color:var(--accent);text-decoration:none;font-weight:600;"><%= o.invoice_number %></a></td>
+                <td><%= o.product_name %></td>
+                <td><%= o.quantity %></td>
+                <td style="font-weight:600;">$<%= parseFloat(o.total_price).toFixed(2) %></td>
+                <td><%= o.coupon_code ? '<span class="badge badge-success">'+o.coupon_code+'</span>' : '—' %></td>
+                <td><span class="badge badge-<%= o.status==='active'?'success':o.status==='pending'?'warning':o.status==='cancelled'?'danger':'gray' %>"><%= o.status %></span></td>
+                <td style="color:var(--text-muted);font-size:12px;"><%= new Date(o.created_at).toLocaleDateString() %></td>
+                <td><a href="/orders/<%= o.id %>" class="btn btn-secondary btn-sm">View</a></td>
+              </tr>
+              <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function applyCoupon() {
+  const code = document.getElementById('coupon_code').value;
+  const orderId = document.getElementById('coupon_order').value;
+  fetch('/orders/apply-coupon',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,order_id:orderId})})
+    .then(r=>r.json()).then(d=>{document.getElementById('coupon_result').textContent=d.message||d.error;});
+}
+</script>
+<%- include('partials/footer') %>

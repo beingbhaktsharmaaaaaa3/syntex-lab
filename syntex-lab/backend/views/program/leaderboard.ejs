@@ -1,0 +1,54 @@
+<%- include('../partials/program-navbar') %>
+<div class="prog-page">
+  <div style="margin-bottom:20px;"><h1 style="font-size:22px;font-weight:800;">Leaderboard</h1><p style="color:var(--prog-muted);font-size:13px;">Ranked by accepted reports and total bounty earned.</p></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
+    <div>
+      <div class="prog-card">
+        <div class="prog-card-header"><h3>Researcher Rankings</h3></div>
+        <table class="prog-table">
+          <thead><tr><th>Rank</th><th>Researcher</th><th>Reports</th><th>Accepted</th><th>Flags</th><th>Bounty</th></tr></thead>
+          <tbody>
+            <% reporters.forEach((r,i) => { %>
+            <tr>
+              <td style="font-weight:800;color:var(--prog-muted);">#<%= i+1 %></td>
+              <td><div style="font-weight:600;font-size:13px;"><%= r.first_name?r.first_name+' '+(r.last_name||''):r.username %></div><div style="font-size:11px;color:var(--prog-muted);">@<%= r.username %></div></td>
+              <td><span class="prog-badge prog-badge-gray"><%= r.report_count %></span></td>
+              <td><span class="prog-badge prog-badge-green"><%= r.accepted %></span></td>
+              <td><span class="prog-badge prog-badge-blue"><%= r.flags_captured %> 🚩</span></td>
+              <td style="font-weight:700;color:#25855A;">$<%= parseFloat(r.total_bounty).toLocaleString() %></td>
+            </tr>
+            <% }) %>
+            <% if(!reporters.length){ %><tr><td colspan="6" style="text-align:center;color:var(--prog-muted);padding:32px;">No reports submitted yet. <a href="/program/submit" style="color:#25855A;">Be the first!</a></td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="prog-card" style="margin-bottom:16px;">
+        <div class="prog-card-header"><h3>Hall of Fame</h3><a href="/program/hall-of-fame" style="font-size:12px;color:#25855A;text-decoration:none;">View all →</a></div>
+        <table class="prog-table">
+          <tbody>
+            <% hof.slice(0,5).forEach(r => { %>
+            <tr>
+              <td style="font-weight:800;color:var(--prog-muted);">#<%= r.rank %></td>
+              <td><div style="font-weight:600;font-size:13px;"><%= r.researcher_name %></div><div style="font-size:11px;color:var(--prog-muted);">@<%= r.handle %></div></td>
+              <td style="font-weight:700;color:#25855A;">$<%= parseFloat(r.total_bounty).toLocaleString() %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <div class="prog-card">
+        <div class="prog-card-header"><h3>Earn Your Spot</h3></div>
+        <div class="prog-card-body" style="font-size:12px;color:var(--prog-muted);line-height:1.8;">
+          <p>Submit valid reports, capture flags, and chain vulnerabilities to climb the rankings.</p>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+            <a href="/program/submit" class="prog-btn prog-btn-green" style="justify-content:center;">+ Submit Report</a>
+            <a href="/reports/flags"  class="prog-btn prog-btn-outline" style="justify-content:center;">🚩 Flag Hunt</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/program-footer') %>

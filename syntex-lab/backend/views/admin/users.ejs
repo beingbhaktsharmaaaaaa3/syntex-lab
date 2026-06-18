@@ -1,0 +1,80 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">User Management</span>
+      <div class="header-right">
+        <a href="/api/v2/users/export?format=csv" class="btn btn-secondary btn-sm">Export CSV</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="admin-banner" style="margin-bottom:20px;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Tip: The "Export CSV" button calls <code>/api/v2/users/export</code> — try it unauthenticated.
+      </div>
+
+      <div class="card mb-4" style="max-width:480px;">
+        <div class="card-header"><h3>Search Users</h3></div>
+        <div class="card-body">
+          <!-- VULNERABILITY: SQLi in admin search -->
+          <form action="/admin/users" method="GET" style="display:flex;gap:8px;">
+            <input type="text" name="search" value="<%= filters.search||'' %>" placeholder="Username or email…" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+            <select name="role" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff;">
+              <option value="">All Roles</option>
+              <option value="admin"     <%= filters.role==='admin'?'selected':'' %>>Admin</option>
+              <option value="user"      <%= filters.role==='user'?'selected':'' %>>User</option>
+              <option value="developer" <%= filters.role==='developer'?'selected':'' %>>Developer</option>
+              <option value="support"   <%= filters.role==='support'?'selected':'' %>>Support</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>API Key</th><th>Active</th><th>Last Login</th><th>Actions</th></tr></thead>
+            <tbody>
+              <% users.forEach(u => { %>
+              <tr>
+                <td><a href="/profile/<%= u.id %>" style="color:var(--accent);text-decoration:none;">#<%= u.id %></a></td>
+                <td style="font-weight:600;"><%= u.username %></td>
+                <td style="font-size:12px;"><%= u.email %></td>
+                <td>
+                  <!-- VULNERABILITY: Role can be changed with no confirmation — mass privilege escalation -->
+                  <select onchange="updateUser(<%= u.id %>, this.value, '<%= u.email %>')" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:3px;">
+                    <option value="user"      <%= u.role==='user'?'selected':'' %>>user</option>
+                    <option value="admin"     <%= u.role==='admin'?'selected':'' %>>admin</option>
+                    <option value="developer" <%= u.role==='developer'?'selected':'' %>>developer</option>
+                    <option value="support"   <%= u.role==='support'?'selected':'' %>>support</option>
+                  </select>
+                </td>
+                <td style="font-family:monospace;font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= u.api_key %>"><%= u.api_key %></td>
+                <td><span class="badge badge-<%= u.is_active?'success':'danger' %>"><%= u.is_active?'Yes':'No' %></span></td>
+                <td style="font-size:11px;color:var(--text-muted);"><%= u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never' %></td>
+                <td>
+                  <a href="/profile/<%= u.id %>" class="btn btn-secondary btn-sm">View</a>
+                  <!-- VULNERABILITY: Delete any user including admin with no CSRF protection -->
+                  <form action="/admin/users/<%= u.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Delete user <%= u.username %>?')">
+                    <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function updateUser(id, role, email) {
+  fetch(`/admin/users/${id}/update`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role, email, is_active: true})
+  }).then(r=>r.json()).then(d=>{ if(!d.success) alert('Update failed: '+d.error); });
+}
+</script>
+<%- include('partials/footer') %>

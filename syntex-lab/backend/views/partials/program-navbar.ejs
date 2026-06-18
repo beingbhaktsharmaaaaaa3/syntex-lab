@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Syntex Bug Bounty' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Program Platform Override Styles ─────────────────────── */
+    :root {
+      --prog-bg:      #F0F4F8;
+      --prog-card:    #FFFFFF;
+      --prog-primary: #25855A;
+      --prog-accent:  #48BB78;
+      --prog-dark:    #1A202C;
+      --prog-muted:   #718096;
+      --prog-border:  #E2E8F0;
+      --prog-header:  #1A202C;
+    }
+    body { background: var(--prog-bg); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+
+    .prog-header {
+      background: var(--prog-header);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 3px solid var(--prog-primary);
+    }
+    .prog-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: #fff;
+    }
+    .prog-brand-badge {
+      background: var(--prog-primary);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .prog-brand-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .prog-brand-sub  { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+    .prog-nav { display: flex; align-items: center; gap: 4px; }
+    .prog-nav a {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .prog-nav a:hover, .prog-nav a.active { color: #fff; background: rgba(255,255,255,0.1); }
+    .prog-nav a.submit-btn {
+      background: var(--prog-primary);
+      color: #fff;
+      font-weight: 700;
+    }
+    .prog-nav a.submit-btn:hover { background: #276749; }
+
+    .prog-user { display: flex; align-items: center; gap: 10px; }
+    .prog-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--prog-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+    }
+
+    /* Mode banner */
+    .mode-banner {
+      padding: 8px 32px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Program page content */
+    .prog-page { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+    .prog-card {
+      background: var(--prog-card);
+      border: 1px solid var(--prog-border);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .prog-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--prog-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .prog-card-header h2, .prog-card-header h3 { font-size: 15px; font-weight: 700; color: var(--prog-dark); }
+    .prog-card-body { padding: 20px; }
+
+    .prog-badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .prog-badge-green   { background: #C6F6D5; color: #22543D; }
+    .prog-badge-red     { background: #FED7D7; color: #742A2A; }
+    .prog-badge-yellow  { background: #FEFCBF; color: #744210; }
+    .prog-badge-blue    { background: #BEE3F8; color: #2A4365; }
+    .prog-badge-gray    { background: #EDF2F7; color: #2D3748; }
+    .prog-badge-purple  { background: #E9D8FD; color: #44337A; }
+
+    .prog-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      text-decoration: none; border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .prog-btn-green  { background: var(--prog-primary); color: #fff; }
+    .prog-btn-green:hover { background: #276749; }
+    .prog-btn-outline { background: transparent; color: var(--prog-dark); border-color: var(--prog-border); }
+    .prog-btn-outline:hover { background: var(--prog-bg); }
+
+    .prog-stat { text-align: center; padding: 16px; }
+    .prog-stat-value { font-size: 28px; font-weight: 800; color: var(--prog-dark); }
+    .prog-stat-label { font-size: 12px; color: var(--prog-muted); margin-top: 2px; }
+
+    .prog-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .prog-table thead th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 700; color: var(--prog-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      background: var(--prog-bg); border-bottom: 1px solid var(--prog-border);
+    }
+    .prog-table tbody td { padding: 12px 14px; border-bottom: 1px solid #F7FAFC; }
+    .prog-table tbody tr:hover { background: #F7FAFC; }
+    .prog-table tbody tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+<% const labMode = locals.lab ? lab.mode : (process.env.LAB_MODE||'beginner'); %>
+
+<!-- Mode banner -->
+<% if (labMode !== 'realistic') { %>
+<div class="mode-banner" style="background:<%= locals.lab ? lab.bannerColor+'18' : '#15803D18' %>;border-bottom:1px solid <%= locals.lab ? lab.bannerColor+'33' : '#15803D33' %>;">
+  <span style="background:<%= locals.lab ? lab.bannerColor : '#15803D' %>;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;"><%= labMode.toUpperCase() %> MODE</span>
+  <span style="color:var(--prog-muted);">
+    <% if(labMode==='beginner'){%>Hints, flags, and challenges visible. Switch to <code>LAB_MODE=realistic</code> for real bug bounty experience.
+    <%}else if(labMode==='intermediate'){%>Limited hints. Flags visible. No solutions shown.
+    <%}else{%>Hard mode — no hints, no flags, no vulnerability names.<%}%>
+  </span>
+</div>
+<% } %>
+
+<!-- Header -->
+<header class="prog-header">
+  <a href="/program" class="prog-brand">
+    <div style="width:32px;height:32px;background:var(--prog-primary);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">🛡</div>
+    <div>
+      <div class="prog-brand-name">Syntex Security</div>
+      <div class="prog-brand-sub">Bug Bounty Program</div>
+    </div>
+  </a>
+
+  <nav class="prog-nav">
+    <a href="/program">Program</a>
+    <a href="/program/scope">Scope</a>
+    <a href="/program/rules">Rules</a>
+    <% if(labMode !== 'realistic'){ %>
+    <a href="/program/hints">Hints</a>
+    <a href="/program/challenges">Chains</a>
+    <a href="/program/flags">Flags 🚩</a>
+    <% } %>
+    <a href="/program/leaderboard">Leaderboard</a>
+    <a href="/program/reports">My Reports</a>
+    <a href="/program/submit" class="submit-btn">+ Submit</a>
+  </nav>
+
+  <div class="prog-user">
+    <% if (locals.user) { %>
+      <a href="/dashboard" style="color:rgba(255,255,255,0.6);font-size:12px;text-decoration:none;">Target Site →</a>
+      <div class="prog-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div>
+    <% } else { %>
+      <a href="/login" class="prog-btn prog-btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.3);">Sign In</a>
+    <% } %>
+  </div>
+</header>

@@ -1,0 +1,20 @@
+<%- include('../../partials/program-navbar') %>
+<div class="prog-page">
+  <div style="margin-bottom:20px;"><h1 style="font-size:22px;font-weight:800;">Example: Not Applicable Report ❌</h1>
+  <p style="color:var(--prog-muted);font-size:13px;">This report describes behaviour that is not considered a vulnerability in our program.</p></div>
+  <div class="prog-card">
+    <div class="prog-card-header" style="background:#FFF5F5;">
+      <div><h2 style="font-size:17px;font-weight:800;">Self-XSS: Can inject HTML into my own profile bio field</h2>
+      <div style="display:flex;gap:8px;margin-top:8px;"><span class="prog-badge prog-badge-gray">Low</span><span class="prog-badge prog-badge-red">❌ Not Applicable</span></div></div>
+    </div>
+    <div class="prog-card-body">
+      <div style="font-size:13px;line-height:1.8;margin-bottom:16px;">The researcher noted that HTML tags entered into the bio field on their own profile are rendered on their own profile page. This is self-XSS — the script only executes in the reporter's own browser with their own session.</div>
+      <div style="background:#FFF5F5;border:1px solid #FED7D7;border-radius:6px;padding:16px;">
+        <div style="font-weight:700;color:#742A2A;font-size:14px;margin-bottom:6px;">Triage Response — Not Applicable</div>
+        <p style="font-size:13px;line-height:1.7;color:#742A2A;">Thank you for the report. Self-XSS — where an attacker can only execute scripts in their own browser using their own session — is explicitly excluded from our program. To qualify as a valid XSS finding, the payload must execute in another user's browser without their knowledge or interaction. Hint: there IS a stored XSS on this platform that affects all visitors — can you find where comments from one user are displayed to others without sanitization?</p>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:10px;"><a href="/program/examples/accepted" class="prog-btn prog-btn-outline">← Back to Accepted</a><a href="/program/submit" class="prog-btn prog-btn-green">Submit a Report →</a></div>
+</div>
+<%- include('../../partials/program-footer') %>

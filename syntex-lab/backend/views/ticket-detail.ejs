@@ -1,0 +1,76 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Ticket #<%= ticket.id %></span>
+      <div class="header-right">
+        <a href="/tickets" class="btn btn-secondary btn-sm">← All Tickets</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/dashboard">Dashboard</a><span>›</span><a href="/tickets">Tickets</a><span>›</span><span>#<%= ticket.id %></span></div>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3><%= ticket.subject %></h3>
+              <div style="display:flex;gap:6px;">
+                <span class="badge badge-<%= ticket.priority==='critical'?'danger':ticket.priority==='high'?'warning':'gray' %>"><%= ticket.priority %></span>
+                <span class="badge badge-<%= ticket.status==='open'?'info':ticket.status==='resolved'?'success':'gray' %>"><%= ticket.status %></span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="font-size:13px;line-height:1.7;"><%= ticket.message %></div>
+              <div style="margin-top:12px;font-size:11px;color:var(--text-muted);">Submitted by <%= ticket.username %> on <%= new Date(ticket.created_at).toLocaleString() %></div>
+            </div>
+          </div>
+
+          <!-- VULNERABILITY: IDOR — internal_notes visible to any authenticated user who guesses the ticket ID -->
+          <% if (ticket.internal_notes) { %>
+          <div class="card mb-4" style="border-color:#FDE68A;">
+            <div class="card-header" style="background:#FFFBEB;">
+              <h3>Internal Staff Notes</h3>
+              <span class="badge badge-warning">Staff Only</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;font-family:monospace;background:var(--page-bg);padding:12px;border-radius:var(--radius);word-break:break-all;"><%= ticket.internal_notes %></p>
+            </div>
+          </div>
+          <% } %>
+
+          <div class="card">
+            <div class="card-header"><h3>Replies (<%= replies.length %>)</h3></div>
+            <div class="card-body" style="padding:0 20px;">
+              <% replies.forEach(r => { %>
+              <div class="comment">
+                <div class="comment-meta">
+                  <span class="comment-author"><%= r.username %></span>
+                  <% if (r.is_staff) { %><span class="badge badge-info" style="font-size:10px;">Staff</span><% } %>
+                  <span class="comment-date"><%= new Date(r.created_at).toLocaleString() %></span>
+                </div>
+                <div class="comment-body"><%= r.message %></div>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card"><div class="card-header"><h3>Ticket Info</h3></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:5px 0;color:var(--text-muted);width:100px;">Ticket ID</td><td>#<%= ticket.id %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Category</td><td><%= ticket.category||'General' %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Status</td><td><span class="badge badge-<%= ticket.status==='open'?'info':ticket.status==='resolved'?'success':'gray' %>"><%= ticket.status %></span></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Priority</td><td><span class="badge badge-<%= ticket.priority==='critical'?'danger':ticket.priority==='high'?'warning':'gray' %>"><%= ticket.priority %></span></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Created</td><td><%= new Date(ticket.created_at).toLocaleDateString() %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Account</td><td><a href="/profile/<%= ticket.user_id %>" style="color:var(--accent);text-decoration:none;"><%= ticket.username %></a></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Email</td><td><%= ticket.email %></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,73 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title"><%= product.name %></span>
+      <div class="header-right">
+        <a href="/products" class="btn btn-secondary btn-sm">← Back to Products</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/dashboard">Dashboard</a><span>›</span><a href="/products">Products</a><span>›</span><span><%= product.name %></span></div>
+      <div class="grid-2" style="align-items:start;margin-bottom:24px;">
+        <div>
+          <div class="card mb-4">
+            <div class="card-header"><h2 style="font-size:16px;"><%= product.name %></h2><span class="badge badge-info"><%= product.category %></span></div>
+            <div class="card-body">
+              <div style="font-size:13px;line-height:1.7;color:var(--text-muted);margin-bottom:16px;"><%= product.description %></div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+                <% (product.features||'').split(',').forEach(f => { %>
+                <span style="background:var(--info-bg);color:var(--info);padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;"><%= f.trim() %></span>
+                <% }) %>
+              </div>
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:5px 0;color:var(--text-muted);width:120px;">SKU</td><td><code><%= product.sku %></code></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Version</td><td><%= product.version %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">License</td><td><%= product.license_type %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Stock</td><td><%= product.stock %> seats available</td></tr>
+              </table>
+            </div>
+            <div class="card-footer" style="display:flex;align-items:center;justify-content:space-between;">
+              <div><span style="font-size:24px;font-weight:700;color:var(--primary);">$<%= parseFloat(product.price).toFixed(2) %></span><span style="color:var(--text-muted);font-size:12px;"> / <%= product.license_type %></span></div>
+              <!-- VULNERABILITY: quantity and unit_price accepted from client — business logic bug -->
+              <form action="/orders" method="POST" style="display:flex;gap:8px;align-items:center;">
+                <input type="hidden" name="product_id" value="<%= product.id %>">
+                <input type="hidden" name="unit_price" value="<%= product.price %>">
+                <input type="number" name="quantity" value="1" min="-999" max="999" style="width:60px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+                <button type="submit" class="btn btn-primary">Purchase License</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-header"><h3>Customer Reviews</h3><span class="badge badge-gray"><%= reviews.length %> reviews</span></div>
+            <div class="card-body" style="padding:0 20px;">
+              <% reviews.forEach(r => { %>
+              <div class="comment">
+                <div class="comment-meta">
+                  <span class="comment-author"><%= r.author_name || r.username %></span>
+                  <span style="color:var(--warning);">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+                  <span class="comment-date"><%= new Date(r.created_at).toLocaleDateString() %></span>
+                </div>
+                <!-- VULNERABILITY: Stored XSS in review content -->
+                <div class="comment-body"><%- r.content %></div>
+              </div>
+              <% }) %>
+            </div>
+            <div class="card-footer">
+              <form action="/products/<%= product.id %>/review" method="POST">
+                <div class="form-group"><label>Rating</label>
+                  <select name="rating"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select>
+                </div>
+                <div class="form-group"><label>Review</label><textarea name="content" rows="3" placeholder="Share your experience…"></textarea></div>
+                <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>

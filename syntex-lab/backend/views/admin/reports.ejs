@@ -1,0 +1,100 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Report Triage</span>
+      <div class="header-right">
+        <a href="/admin" class="btn btn-secondary btn-sm">← Admin</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="admin-banner" style="margin-bottom:20px;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Triage Dashboard — Review and respond to all submitted bug reports.
+      </div>
+
+      <!-- Status summary cards -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <%
+          const statusInfo = {
+            new:            {label:'New',         color:'#1D4ED8',bg:'#EFF6FF'},
+            needs_more_info:{label:'Needs Info',  color:'#B45309',bg:'#FFFBEB'},
+            accepted:       {label:'Accepted',    color:'#15803D',bg:'#F0FDF4'},
+            duplicate:      {label:'Duplicate',   color:'#6B7280',bg:'#F3F4F6'},
+            informative:    {label:'Informative', color:'#6B7280',bg:'#F3F4F6'},
+            not_applicable: {label:'N/A',         color:'#B91C1C',bg:'#FEF2F2'},
+            resolved:       {label:'Resolved',    color:'#15803D',bg:'#F0FDF4'},
+          };
+          const totalMap = {};
+          totals.forEach(t => { totalMap[t.status] = parseInt(t.n); });
+        %>
+        <% Object.entries(statusInfo).forEach(([key, info]) => { %>
+        <a href="/admin/reports?status=<%= key %>"
+           style="padding:10px 16px;border-radius:6px;text-decoration:none;background:<%= info.bg %>;border:1px solid;border-color:<%= info.color %>22;display:flex;flex-direction:column;align-items:center;min-width:90px;">
+          <div style="font-size:22px;font-weight:800;color:<%= info.color %>;"><%= totalMap[key]||0 %></div>
+          <div style="font-size:11px;font-weight:600;color:<%= info.color %>;"><%= info.label %></div>
+        </a>
+        <% }) %>
+        <a href="/admin/reports" style="padding:10px 16px;border-radius:6px;text-decoration:none;background:var(--page-bg);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;min-width:90px;">
+          <div style="font-size:22px;font-weight:800;color:var(--text);"><%= reports.length %></div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);">Showing</div>
+        </a>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body" style="padding:14px 20px;">
+          <form action="/admin/reports" method="GET" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select name="status" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff;">
+              <option value="">All Statuses</option>
+              <% Object.entries(statusInfo).forEach(([k,v]) => { %><option value="<%= k %>" <%= filters.status===k?'selected':'' %>><%= v.label %></option><% }) %>
+            </select>
+            <select name="severity" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:#fff;">
+              <option value="">All Severities</option>
+              <% ['critical','high','medium','low','info'].forEach(s => { %><option value="<%= s %>" <%= filters.severity===s?'selected':'' %>><%= s.charAt(0).toUpperCase()+s.slice(1) %></option><% }) %>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <a href="/admin/reports" class="btn btn-secondary btn-sm">Clear</a>
+          </form>
+        </div>
+      </div>
+
+      <!-- Reports table -->
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>#</th><th>Title</th><th>Reporter</th><th>Type</th><th>Severity</th><th>Status</th><th>Bounty</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+              <% if(reports.length===0) { %>
+                <tr><td colspan="9" class="text-center text-muted" style="padding:32px;">No reports found.</td></tr>
+              <% } %>
+              <% reports.forEach(r => { %>
+              <%
+                const sCol = {critical:'danger',high:'warning',medium:'info',low:'success',info:'gray'};
+                const stCol = {new:'info',needs_more_info:'warning',accepted:'success',duplicate:'gray',informative:'gray',not_applicable:'danger',resolved:'success'};
+                const stLab = {new:'New',needs_more_info:'Needs Info',accepted:'Accepted',duplicate:'Duplicate',informative:'Informative',not_applicable:'N/A',resolved:'Resolved'};
+              %>
+              <tr>
+                <td style="font-size:12px;color:var(--text-muted);">#<%= r.id %></td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <a href="/reports/<%= r.id %>" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:13px;"><%= r.title %></a>
+                </td>
+                <td style="font-size:12px;"><%= r.reporter %></td>
+                <td><span class="badge badge-gray" style="font-size:10px;"><%= r.vuln_type.replace(/_/g,' ') %></span></td>
+                <td><span class="badge badge-<%= sCol[r.severity]||'gray' %>"><%= r.severity %></span></td>
+                <td><span class="badge badge-<%= stCol[r.status]||'gray' %>"><%= stLab[r.status]||r.status %></span></td>
+                <td style="font-weight:600;color:<%= r.bounty_amount>0?'var(--success)':'var(--text-muted)' %>;">
+                  <%= r.bounty_amount>0?'$'+parseFloat(r.bounty_amount).toLocaleString():'—' %>
+                </td>
+                <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;"><%= new Date(r.created_at).toLocaleDateString() %></td>
+                <td><a href="/reports/<%= r.id %>" class="btn btn-primary btn-sm">Triage</a></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

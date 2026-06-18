@@ -1,0 +1,108 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Admin Dashboard</span>
+      <div class="header-right">
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="admin-banner">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        Administration Panel — Restricted Access. All actions are logged.
+      </div>
+
+      <div class="stats-grid" style="margin-top:20px;">
+        <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value"><%= stats.total_users %></div></div>
+        <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value"><%= stats.total_orders %></div></div>
+        <div class="stat-card"><div class="stat-label">Open Tickets</div><div class="stat-value"><%= stats.open_tickets %></div></div>
+        <div class="stat-card"><div class="stat-label">Revenue (Active)</div><div class="stat-value">$<%= parseFloat(stats.total_revenue||0).toFixed(0) %></div></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="card">
+          <div class="card-header"><h3>Recent Users</h3><a href="/admin/users" class="btn btn-secondary btn-sm">All Users</a></div>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+              <tbody>
+                <% recentUsers.forEach(u => { %>
+                <tr>
+                  <td><a href="/profile/<%= u.id %>" style="color:var(--accent);text-decoration:none;">#<%= u.id %></a></td>
+                  <td><%= u.username %></td>
+                  <td style="font-size:12px;"><%= u.email %></td>
+                  <td><span class="badge badge-<%= u.role==='admin'?'admin':u.role==='developer'?'dev':'gray' %>"><%= u.role %></span></td>
+                  <td style="font-size:12px;color:var(--text-muted);"><%= new Date(u.created_at).toLocaleDateString() %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Network Utilities</h3></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Internal network diagnostic tools. Restricted to administrators.</p>
+            <!-- VULNERABILITY: Command injection via unsanitized host parameter -->
+            <div class="form-group">
+              <label>Ping Host</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="ping_host" placeholder="e.g. 8.8.8.8 or hostname" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+                <button class="btn btn-primary btn-sm" onclick="runPing()">Run</button>
+              </div>
+            </div>
+            <pre id="ping_output" style="min-height:80px;font-size:11px;margin-top:8px;display:none;"></pre>
+            <hr class="divider">
+            <div class="form-group">
+              <label>Execute Command <span style="font-size:10px;color:var(--danger);">(Debug Only)</span></label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="exec_cmd" placeholder="e.g. ls -la /tmp" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">
+                <button class="btn btn-danger btn-sm" onclick="runExec()">Execute</button>
+              </div>
+            </div>
+            <pre id="exec_output" style="min-height:60px;font-size:11px;margin-top:8px;display:none;"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header"><h3>Recent Orders</h3><a href="/orders" class="btn btn-secondary btn-sm">All Orders</a></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Invoice</th><th>Customer</th><th>Product</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+              <% recentOrders.forEach(o => { %>
+              <tr>
+                <td><a href="/orders/<%= o.id %>" style="color:var(--accent);text-decoration:none;font-weight:600;"><%= o.invoice_number %></a></td>
+                <td><a href="/profile/<%= o.user_id %>" style="color:var(--accent);text-decoration:none;"><%= o.username %></a></td>
+                <td style="font-size:12px;"><%= o.product_name %></td>
+                <td>$<%= parseFloat(o.total_price).toFixed(2) %></td>
+                <td><span class="badge badge-<%= o.status==='active'?'success':o.status==='pending'?'warning':'gray' %>"><%= o.status %></span></td>
+                <td style="font-size:12px;color:var(--text-muted);"><%= new Date(o.created_at).toLocaleDateString() %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function runPing() {
+  const host = document.getElementById('ping_host').value;
+  const out = document.getElementById('ping_output');
+  out.style.display='block'; out.textContent='Running...';
+  fetch('/admin/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host})})
+    .then(r=>r.json()).then(d=>{out.textContent = (d.stdout||d.stderr||d.error||'No output');});
+}
+function runExec() {
+  const cmd = document.getElementById('exec_cmd').value;
+  const out = document.getElementById('exec_output');
+  out.style.display='block'; out.textContent='Running...';
+  fetch('/admin/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})})
+    .then(r=>r.json()).then(d=>{out.textContent = d.output||d.error||'';});
+}
+</script>
+<%- include('partials/footer') %>

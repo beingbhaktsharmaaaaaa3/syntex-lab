@@ -1,0 +1,85 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">System Settings</span>
+      <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+    </div>
+    <div class="page-body">
+      <% if (success) { %><div class="alert alert-success alert-auto-dismiss"><%= success %></div><% } %>
+
+      <%# VULNERABILITY: All secrets exposed in the admin settings page — no masking %>
+      <%# Accessible to any user who sets role=admin cookie (broken access control) %>
+
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="card mb-4">
+            <div class="card-header"><h3>Database Configuration</h3><span class="badge badge-danger">Sensitive</span></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:6px 0;color:var(--text-muted);width:140px;">Host</td><td><code><%= config.db_host %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Database</td><td><code><%= config.db_name %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Username</td><td><code><%= config.db_user %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Password</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;"><%= config.db_pass %></code></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>Authentication Secrets</h3><span class="badge badge-danger">Sensitive</span></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:6px 0;color:var(--text-muted);width:140px;">JWT Secret</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;"><%= config.jwt_secret %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Session Secret</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;"><%= config.session_secret %></code></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>Payment Integration</h3><span class="badge badge-danger">Sensitive</span></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:6px 0;color:var(--text-muted);width:140px;">Stripe Secret Key</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;word-break:break-all;"><%= config.stripe_sk %></code></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-4">
+            <div class="card-header"><h3>Cloud / AWS</h3><span class="badge badge-danger">Sensitive</span></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:6px 0;color:var(--text-muted);width:140px;">Access Key</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;"><%= config.aws_key %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Secret Key</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;word-break:break-all;"><%= config.aws_secret %></code></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>Internal Services</h3></div>
+            <div class="card-body">
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:6px 0;color:var(--text-muted);width:140px;">Internal API</td><td><code><%= config.internal_api %></code></td></tr>
+                <tr><td style="padding:6px 0;color:var(--text-muted);">Internal Key</td><td><code style="background:#FEF2F2;color:var(--danger);padding:2px 6px;border-radius:3px;"><%= config.internal_key %></code></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Quick Actions</h3></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="/api/v2/users/export" class="btn btn-secondary btn-sm">Export All Users (JSON)</a>
+                <a href="/api/v2/users/export?format=csv" class="btn btn-secondary btn-sm">Export All Users (CSV)</a>
+                <a href="/api/v1/debug/env" class="btn btn-secondary btn-sm">View All Env Variables</a>
+                <a href="/debug" class="btn btn-secondary btn-sm">Debug Page</a>
+                <a href="/metrics" class="btn btn-secondary btn-sm">Prometheus Metrics</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>

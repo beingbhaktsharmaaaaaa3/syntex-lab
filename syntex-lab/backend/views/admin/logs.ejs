@@ -1,0 +1,35 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Audit Logs</span>
+      <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+    </div>
+    <div class="page-body">
+      <div class="page-header"><h1>Audit Logs</h1><p>Last 100 recorded system events.</p></div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Resource</th><th>IP Address</th><th>Details</th></tr></thead>
+            <tbody>
+              <% if (logs.length === 0) { %>
+                <tr><td colspan="6" class="text-center text-muted" style="padding:32px;">No audit log entries yet.</td></tr>
+              <% } else { %>
+              <% logs.forEach(l => { %>
+              <tr>
+                <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;"><%= new Date(l.created_at).toLocaleString() %></td>
+                <td><% if (l.user_id) { %><a href="/profile/<%= l.user_id %>" style="color:var(--accent);text-decoration:none;"><%= l.username||('#'+l.user_id) %></a><% } else { %><span class="text-muted">—</span><% } %></td>
+                <td><span class="badge badge-gray" style="font-size:10px;"><%= l.action %></span></td>
+                <td style="font-size:12px;"><%= l.resource %><% if(l.resource_id){ %> <code style="font-size:10px;">#<%= l.resource_id %></code><% } %></td>
+                <td style="font-family:monospace;font-size:11px;"><%= l.ip_address %></td>
+                <td style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= l.details %>"><%= l.details||'—' %></td>
+              </tr>
+              <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>
