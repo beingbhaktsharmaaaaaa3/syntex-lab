@@ -1,0 +1,79 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Vulnerability Hints</span>
+      <div class="header-right">
+        <a href="/program/challenges" class="btn btn-secondary btn-sm">Vuln Chains →</a>
+        <a href="/profile/<%= user ? user.id : '' %>" class="header-user">
+          <% if(user){%><div class="header-avatar"><%=((user.first_name||user.username).charAt(0)).toUpperCase()%></div><%}%>
+        </a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header">
+        <h1>Hint System</h1>
+        <p>Three progressive levels per vulnerability — unlock only what you need. Solutions are kept separate.</p>
+      </div>
+
+      <!-- Lab mode banner -->
+      <% if(locals.lab && lab.showBanner) { %>
+      <div style="background:<%= lab.bannerColor %>18;border:1px solid <%= lab.bannerColor %>44;border-radius:var(--radius);padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="background:<%= lab.bannerColor %>;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;"><%= lab.bannerLabel %> MODE</span>
+        <span style="font-size:12px;color:var(--text-muted);">
+          <% if(lab.mode==='easy'){%>Hints visible by default. In <strong>realistic</strong> mode no hints are shown in the UI.
+          <%}else if(lab.mode==='realistic'){%>Realistic mode active — all UI hints hidden. Use this page for progressive disclosure only.
+          <%}else{%>Hints available on request. Change <code>LAB_MODE</code> in docker-compose.yml to switch difficulty.<%}%>
+        </span>
+      </div>
+      <% } %>
+
+      <% const catColors = {
+        'SQLi':'info','XSS':'warning','IDOR':'danger','CSRF':'gray',
+        'JWT':'admin','SSRF':'info','LFI':'warning','Command Injection':'danger',
+        'Open Redirect':'gray','CORS':'info','Broken Access':'danger',
+        'Business Logic':'warning','Recon / Exposure':'gray','Cryptography':'info',
+        'Rate Limiting':'gray','Auth Bypass':'danger',
+      }; %>
+
+      <% Object.entries(grouped).forEach(([category, vulns]) => { %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3><span class="badge badge-<%= catColors[category]||'gray' %>" style="margin-right:8px;"><%= category %></span> <%= category %></h3>
+          <span style="font-size:12px;color:var(--text-muted);"><%= vulns.length %> vuln<%= vulns.length!==1?'s':'' %></span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Vulnerability</th><th>Endpoint</th><th>Difficulty</th><th>Hints</th><th></th></tr></thead>
+            <tbody>
+              <% vulns.forEach(v => { %>
+              <% const diffColors = {easy:'success',medium:'warning',hard:'danger'}; %>
+              <tr>
+                <td style="font-weight:600;font-size:13px;"><%= v.title %></td>
+                <td><code style="font-size:11px;"><%= v.endpoint %></code></td>
+                <td><span class="badge badge-<%= diffColors[v.difficulty]||'gray' %>"><%= v.difficulty %></span></td>
+                <td>
+                  <div style="display:flex;gap:4px;">
+                    <% [1,2,3].forEach(l => { %>
+                    <div style="width:12px;height:12px;border-radius:50%;background:var(--border);border:2px solid var(--border);" title="Level <%=l%>"></div>
+                    <% }) %>
+                  </div>
+                </td>
+                <td><a href="/program/hints/<%= v.slug %>" class="btn btn-secondary btn-sm">View Hints</a></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% }) %>
+
+      <div class="card">
+        <div class="card-body" style="text-align:center;padding:24px;">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Ready to practice multi-step exploitation?</p>
+          <a href="/program/challenges" class="btn btn-primary">Try Vulnerability Chains →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

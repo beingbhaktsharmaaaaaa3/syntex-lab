@@ -1,0 +1,132 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Vuln Chain</span>
+      <div class="header-right">
+        <a href="/program/challenges" class="btn btn-secondary btn-sm">← All Chains</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/program/challenges">Chains</a><span>›</span><span><%= chain.title %></span></div>
+
+      <% const diffColor = {easy:'success',medium:'warning',hard:'danger'}; %>
+
+      <div style="display:flex;gap:24px;align-items:start;">
+        <div style="flex:1;min-width:0;">
+
+          <!-- Chain header -->
+          <div class="card mb-4" style="background:linear-gradient(135deg,#1B3A6B,#2D5E8E);color:#fff;border:none;">
+            <div class="card-body" style="padding:28px;">
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;"><%= chain.category %></div>
+              <h1 style="font-size:20px;font-weight:800;margin-bottom:10px;"><%= chain.title %></h1>
+              <p style="font-size:13px;opacity:0.8;line-height:1.6;max-width:560px;"><%= chain.description %></p>
+              <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+                <span style="background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;font-size:11px;">⏱ <%= chain.time %></span>
+                <span style="background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;font-size:11px;"><%= chain.steps.length %> steps</span>
+                <% chain.vulns.forEach(v => { %><span style="background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;font-size:11px;"><%= v %></span><% }) %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steps -->
+          <% chain.steps.forEach((step, idx) => { %>
+          <div class="card mb-3">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><%= step.n %></div>
+                <h3 style="font-size:14px;"><%= step.title %></h3>
+              </div>
+              <span style="font-size:11px;color:var(--text-muted);">Step <%= step.n %> / <%= chain.steps.length %></span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;line-height:1.8;"><%= step.body %></p>
+              <% if(idx < chain.steps.length - 1) { %>
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-muted);">
+                ↓ When you've confirmed this step, move to: <strong><%= chain.steps[idx+1].title %></strong>
+              </div>
+              <% } %>
+            </div>
+          </div>
+          <% }) %>
+
+          <!-- Flag / goal -->
+          <div class="card mb-4" style="border-color:var(--success);">
+            <div class="card-header" style="background:var(--success-bg);">
+              <h3 style="color:var(--success);">🎯 Goal / Flag</h3>
+            </div>
+            <div class="card-body">
+              <p style="font-size:14px;font-weight:600;"><%= chain.flag %></p>
+            </div>
+          </div>
+
+          <!-- Mark complete -->
+          <% if(!completed) { %>
+          <div class="card">
+            <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div style="font-weight:700;font-size:14px;">Finished the chain?</div>
+                <div style="font-size:12px;color:var(--text-muted);">Mark it complete and write a report for the vulnerabilities you found.</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <form action="/challenges/<%= chain.id %>/complete" method="POST">
+                  <button type="submit" class="btn btn-primary">Mark Complete ✓</button>
+                </form>
+                <a href="/program/submit" class="btn btn-secondary">Submit Report →</a>
+              </div>
+            </div>
+          </div>
+          <% } else { %>
+          <div class="alert alert-success">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div><strong>Chain completed!</strong> Don't forget to submit a report for the vulnerabilities you exploited.</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <a href="/program/submit" class="btn btn-primary">Submit Report →</a>
+            <a href="/program/challenges" class="btn btn-secondary">Next Chain →</a>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Sidebar -->
+        <aside style="width:240px;flex-shrink:0;">
+          <div class="card mb-4">
+            <div class="card-header"><h3>Tools Needed</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:6px;">
+              <% chain.tools.forEach(t => { %>
+              <span style="background:var(--page-bg);border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:12px;font-weight:500;"><%= t %></span>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>Vulnerabilities Used</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:6px;">
+              <% chain.vulns.forEach(v => { %>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                <span><%= v %></span>
+                <a href="/program/hints" style="color:var(--accent);font-size:11px;">hint</a>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header"><h3>After This Chain</h3></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:1.7;">
+              <p>Document everything you did. A writeup covering all steps is worth a P1 or P2 report in a real program — chained bugs are always more impactful than individual findings.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Other Chains</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:6px;">
+              <a href="/program/challenges" class="btn btn-secondary btn-sm">View All Chains →</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

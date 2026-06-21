@@ -1,0 +1,123 @@
+<%- include('../partials/program-navbar') %>
+<div class="prog-page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-size:12px;color:var(--prog-muted);margin-bottom:4px;"><a href="/program" style="color:#25855A;text-decoration:none;">Program</a> › Flag Hunt</div>
+      <h1 style="font-size:22px;font-weight:800;">🚩 Flag Hunt</h1>
+    </div>
+    <a href="/program/submit" class="prog-btn prog-btn-green">+ Submit Report</a>
+  </div>
+
+  <!-- Progress Header -->
+  <div class="prog-card" style="background:linear-gradient(135deg,#1A202C,#2D3748);color:#fff;border:none;margin-bottom:20px;">
+    <div class="prog-card-body" style="padding:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <p style="opacity:0.7;font-size:13px;max-width:480px;">Exploit vulnerabilities on syntex.local → find the FLAG{...} → submit a report with the flag to prove exploitation.</p>
+          <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">
+            <div><span style="font-size:22px;font-weight:800;"><%= foundSlugs.size %></span><span style="opacity:0.5;font-size:14px;">/<%= flags.length %></span> <span style="font-size:12px;opacity:0.6;">flags</span></div>
+            <div><span style="font-size:22px;font-weight:800;color:#FCD34D;"><%= totalPoints %></span> <span style="font-size:12px;opacity:0.6;">pts earned</span></div>
+            <div><span style="font-size:22px;font-weight:800;color:#F87171;"><%= stats.first_bloods||0 %></span> <span style="font-size:12px;opacity:0.6;">🩸 first bloods</span></div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;opacity:0.6;margin-bottom:6px;"><%= maxPoints %> pts available</div>
+          <div style="width:200px;background:rgba(0,0,0,0.4);border-radius:20px;height:10px;overflow:hidden;">
+            <div style="height:100%;background:#FCD34D;border-radius:20px;width:<%= flags.length>0?Math.round(foundSlugs.size/flags.length*100):0 %>%;"></div>
+          </div>
+          <div style="font-size:11px;opacity:0.5;margin-top:4px;"><%= flags.length>0?Math.round(foundSlugs.size/flags.length*100):0 %>% complete</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="prog-card" style="margin-bottom:20px;border-color:#48BB78;">
+    <div class="prog-card-body" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <% [
+        {n:'1',t:'Exploit',d:'Find a vulnerability on syntex.local, api.syntex.local, or other in-scope assets.'},
+        {n:'2',t:'Find Flag',d:'The FLAG{...} string appears at the proof point when the bug is successfully exploited.'},
+        {n:'3',t:'Submit Report',d:'Go to /program/submit, fill in your report, and paste the flag for instant verification.'},
+        {n:'4',t:'Earn Points',d:'Valid flag → report auto-accepted → points awarded. First solver gets 50% bonus points!'},
+      ].forEach(s => { %>
+      <div style="flex:1;min-width:160px;text-align:center;">
+        <div style="width:32px;height:32px;background:#25855A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;margin:0 auto 8px;"><%= s.n %></div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px;"><%= s.t %></div>
+        <div style="font-size:11px;color:var(--prog-muted);"><%= s.d %></div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Flags by category -->
+  <%
+    const categories = [...new Set(flags.map(f => f.category))].sort();
+    const sevColors  = {critical:'prog-badge-red',high:'prog-badge-yellow',medium:'prog-badge-blue',low:'prog-badge-green',info:'prog-badge-gray'};
+    const diffColors = {easy:'prog-badge-green',medium:'prog-badge-yellow',hard:'prog-badge-red'};
+  %>
+  <% categories.forEach(cat => { %>
+  <%   const catFlags = flags.filter(f => f.category===cat);
+       const catFound = catFlags.filter(f => foundSlugs.has(f.slug)).length; %>
+  <div class="prog-card" style="margin-bottom:16px;">
+    <div class="prog-card-header">
+      <h3><%= cat %></h3>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:80px;background:#E2E8F0;border-radius:10px;height:6px;overflow:hidden;">
+          <div style="height:100%;background:#25855A;width:<%= catFlags.length>0?Math.round(catFound/catFlags.length*100):0 %>%;"></div>
+        </div>
+        <span style="font-size:12px;color:var(--prog-muted);"><%= catFound %>/<%= catFlags.length %></span>
+      </div>
+    </div>
+    <table class="prog-table">
+      <thead><tr><th>Status</th><th>Vulnerability</th><th>Severity</th><th>Difficulty</th><th>Points</th><th>Endpoint</th><th>Found</th><th></th></tr></thead>
+      <tbody>
+        <% catFlags.forEach(f => { %>
+        <% const captured = foundSlugs.has(f.slug);
+           const isFirstBlooder = fbMap[f.slug] === (locals.user ? user.id : -1); %>
+        <tr style="<%= captured ? 'background:#F0FFF4;' : '' %>">
+          <td>
+            <% if (captured) { %>
+              <span title="Captured">✅</span>
+              <% if (isFirstBlooder) { %><span title="First Blood">🩸</span><% } %>
+            <% } else { %>
+              <span title="Not found yet" style="opacity:0.4;">🔒</span>
+            <% } %>
+          </td>
+          <td>
+            <div style="font-weight:600;font-size:13px;"><%= f.vuln_title %></div>
+            <div style="font-size:11px;color:var(--prog-muted);font-family:monospace;">
+              <% if (captured && showFlagValues) { %>
+                <span style="color:#25855A;"><%= f.flag_value %></span>
+              <% } else if (captured) { %>
+                <span style="color:var(--prog-muted);">FLAG{***REDACTED***} — submit a report to see your flags</span>
+              <% } else { %>
+                <span style="opacity:0.4;">FLAG{???}</span>
+              <% } %>
+            </div>
+          </td>
+          <td><span class="prog-badge <%= sevColors[f.severity]||'prog-badge-gray' %>"><%= f.severity %></span></td>
+          <td><span class="prog-badge <%= diffColors[f.difficulty]||'prog-badge-gray' %>"><%= f.difficulty %></span></td>
+          <td>
+            <span style="font-weight:700;color:<%= captured ? '#25855A' : 'var(--prog-muted)' %>;">
+              <%= captured ? '+'+f.points : f.points %> pts
+            </span>
+          </td>
+          <td><code style="font-size:10px;color:var(--prog-muted);"><%= f.endpoint ? f.endpoint.slice(0,30)+(f.endpoint.length>30?'…':'') : '—' %></code></td>
+          <td style="font-size:11px;color:var(--prog-muted);">
+            <%= (captured && foundMap[f.slug]) ? new Date(foundMap[f.slug]).toLocaleDateString() : '—' %>
+          </td>
+          <td>
+            <% if (!captured) { %>
+              <a href="/program/hints/<%= f.slug %>" class="prog-btn prog-btn-outline" style="font-size:11px;padding:4px 8px;">Hints →</a>
+            <% } else { %>
+              <a href="/program/submit" class="prog-btn prog-btn-green" style="font-size:11px;padding:4px 8px;">Report →</a>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% }) %>
+</div>
+<%- include('../partials/program-footer') %>

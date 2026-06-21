@@ -1,0 +1,57 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Order Detail</span>
+      <div class="header-right">
+        <a href="/orders" class="btn btn-secondary btn-sm">← My Orders</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="breadcrumb"><a href="/dashboard">Dashboard</a><span>›</span><a href="/orders">Orders</a><span>›</span><span><%= order.invoice_number %></span></div>
+      <!-- VULNERABILITY: IDOR — /orders/:id returns any user's order. Change the ID in the URL. -->
+      <div class="grid-2" style="align-items:start;">
+        <div class="card"><div class="card-header"><h3>Order Summary</h3><span class="badge badge-<%= order.status==='active'?'success':order.status==='pending'?'warning':'danger' %>"><%= order.status %></span></div>
+          <div class="card-body">
+            <table style="width:100%;font-size:13px;">
+              <tr><td style="padding:6px 0;color:var(--text-muted);width:160px;">Invoice Number</td><td style="font-weight:600;"><%= order.invoice_number %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Product</td><td><%= order.product_name %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">SKU</td><td><code><%= order.sku %></code></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Quantity</td><td><%= order.quantity %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Unit Price</td><td>$<%= parseFloat(order.unit_price).toFixed(2) %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Discount</td><td><%= order.discount > 0 ? '-$'+parseFloat(order.discount).toFixed(2)+' ('+order.coupon_code+')' : '—' %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Total</td><td style="font-size:16px;font-weight:700;color:var(--primary);">$<%= parseFloat(order.total_price).toFixed(2) %></td></tr>
+              <tr><td style="padding:6px 0;color:var(--text-muted);">Order Date</td><td><%= new Date(order.created_at).toLocaleString() %></td></tr>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-4"><div class="card-header"><h3>License Key</h3></div>
+            <div class="card-body">
+              <% if (order.license_key) { %>
+              <code style="display:block;background:var(--page-bg);padding:12px;border-radius:var(--radius);font-size:13px;word-break:break-all;"><%= order.license_key %></code>
+              <% } else { %><p class="text-muted" style="font-size:13px;">License key pending payment confirmation.</p><% } %>
+            </div>
+          </div>
+          <div class="card mb-4"><div class="card-header"><h3>Customer Information</h3></div>
+            <div class="card-body">
+              <!-- VULNERABILITY: IDOR — shows customer PII for any order ID -->
+              <table style="font-size:13px;width:100%;">
+                <tr><td style="padding:5px 0;color:var(--text-muted);width:100px;">Account</td><td><%= order.username %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Email</td><td><%= order.email %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Phone</td><td><%= order.phone||'—' %></td></tr>
+                <tr><td style="padding:5px 0;color:var(--text-muted);">Address</td><td><%= order.shipping_address||'—' %></td></tr>
+              </table>
+            </div>
+          </div>
+          <% if (order.notes) { %>
+          <div class="card" style="border-color:#FDE68A;"><div class="card-header" style="background:#FFFBEB;"><h3>Order Notes</h3></div>
+            <div class="card-body"><p style="font-size:13px;font-family:monospace;word-break:break-all;"><%= order.notes %></p></div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>

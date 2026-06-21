@@ -1,0 +1,144 @@
+<%- include('../partials/program-navbar') %>
+<div class="prog-page">
+  <div style="margin-bottom:20px;">
+    <div style="font-size:12px;color:var(--prog-muted);margin-bottom:4px;">
+      <a href="/program" style="color:#25855A;text-decoration:none;">Program</a> ›
+      <a href="/program/hints" style="color:#25855A;text-decoration:none;">Hints</a> ›
+      <%= hint.category %>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:24px;align-items:start;flex-wrap:wrap;">
+    <div style="flex:1;min-width:0;">
+
+      <!-- Header -->
+      <div class="prog-card" style="margin-bottom:16px;">
+        <div class="prog-card-body" style="padding:24px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#25855A;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;"><%= hint.category %></div>
+              <h2 style="font-size:18px;font-weight:800;margin-bottom:10px;"><%= hint.title %></h2>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <span class="prog-badge <%= {easy:'prog-badge-green',medium:'prog-badge-yellow',hard:'prog-badge-red'}[hint.difficulty]||'prog-badge-gray' %>"><%= hint.difficulty %></span>
+                <span style="font-size:12px;color:var(--prog-muted);">Endpoint: <code><%= hint.endpoint %></code></span>
+                <span style="font-size:12px;color:var(--prog-muted);">File: <code><%= hint.file %></code></span>
+              </div>
+            </div>
+            <div style="text-align:center;flex-shrink:0;">
+              <div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;">
+                <% [1,2,3].forEach(l => { %>
+                <div style="width:18px;height:18px;border-radius:50%;background:<%= unlockedLevels.includes(l)?'#25855A':'#E2E8F0' %>;border:2px solid <%= unlockedLevels.includes(l)?'#25855A':'#E2E8F0' %>;transition:all 0.2s;" title="Level <%=l%>"></div>
+                <% }) %>
+              </div>
+              <div style="font-size:11px;color:var(--prog-muted);"><%= unlockedLevels.length %>/3 unlocked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hint levels -->
+      <% hint.hints.forEach((hintText, idx) => { %>
+      <% const level = idx + 1; %>
+      <% const isUnlocked = unlockedLevels.includes(level); %>
+      <% const canUnlock  = level === 1 || unlockedLevels.includes(level - 1); %>
+
+      <div class="prog-card" style="margin-bottom:12px;border-width:2px;border-color:<%= isUnlocked ? '#25855A' : '#E2E8F0' %>;">
+        <div class="prog-card-header" style="background:<%= isUnlocked ? '#F0FFF4' : 'transparent' %>;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:<%= isUnlocked?'#25855A':'#E2E8F0' %>;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:<%= isUnlocked?'#fff':'#718096' %>;flex-shrink:0;">
+              <%= isUnlocked ? '✓' : level %>
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:14px;"><%= ['Very Small Clue','Specific Direction','Exploitation Path'][idx] %></div>
+              <div style="font-size:11px;color:var(--prog-muted);">Level <%= level %> of 3</div>
+            </div>
+          </div>
+          <span class="prog-badge <%= isUnlocked ? 'prog-badge-green' : 'prog-badge-gray' %>"><%= isUnlocked ? 'Unlocked' : 'Locked' %></span>
+        </div>
+
+        <div class="prog-card-body">
+          <% if (isUnlocked) { %>
+            <p style="font-size:14px;line-height:1.8;"><%= hintText %></p>
+          <% } else if (canUnlock) { %>
+            <div style="text-align:center;padding:16px 0;">
+              <p style="font-size:13px;color:var(--prog-muted);margin-bottom:14px;">Try to find this vulnerability yourself first. Unlock this hint only if you're stuck.</p>
+              <form action="/program/hints/<%= slug %>/<%= level %>/unlock" method="POST" style="display:inline;">
+                <button type="submit" class="prog-btn prog-btn-outline">
+                  🔓 Unlock Level <%= level %> Hint
+                </button>
+              </form>
+            </div>
+          <% } else { %>
+            <div style="text-align:center;padding:12px 0;">
+              <p style="font-size:12px;color:var(--prog-muted);">Unlock the previous hint level first.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+
+      <!-- All hints unlocked — link to submit -->
+      <% if (unlockedLevels.length === 3) { %>
+      <div class="prog-card" style="border-color:#25855A;border-width:2px;">
+        <div class="prog-card-header" style="background:#F0FFF4;">
+          <h3 style="color:#22543D;">All Hints Unlocked</h3>
+          <span class="prog-badge prog-badge-green">Ready to exploit</span>
+        </div>
+        <div class="prog-card-body" style="text-align:center;padding:20px;">
+          <p style="font-size:13px;color:var(--prog-muted);margin-bottom:16px;">You have all the clues. Go exploit it, find the FLAG{...}, and submit your report.</p>
+          <a href="/program/submit" class="prog-btn prog-btn-green">Submit Report with Flag →</a>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Sidebar -->
+    <aside style="width:240px;flex-shrink:0;">
+      <div class="prog-card" style="margin-bottom:14px;">
+        <div class="prog-card-header"><h3>Approach</h3></div>
+        <div class="prog-card-body" style="font-size:12px;line-height:1.9;color:var(--prog-muted);">
+          <ol style="padding-left:16px;margin:0;">
+            <li>Try the vulnerability yourself first</li>
+            <li>Unlock hints only if truly stuck</li>
+            <li>Use Burp Suite to intercept requests</li>
+            <li>Find the FLAG{...} at the proof point</li>
+            <li>Submit a full report with the flag</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="prog-card" style="margin-bottom:14px;">
+        <div class="prog-card-header"><h3>Related Tools</h3></div>
+        <div class="prog-card-body" style="display:flex;flex-direction:column;gap:6px;">
+          <%
+            const toolMap = {
+              'SQL Injection':['sqlmap -u URL -p param','Burp Suite Repeater','Manual: quote + UNION'],
+              'XSS':["dalfox url 'URL'","XSS Hunter","Burp Suite"],
+              'IDOR':['Burp Autorize extension','Manual ID enumeration','curl without auth'],
+              'SSRF':['SSRFmap','interactsh OOB listener','curl to internal hosts'],
+              'JWT':['jwt_tool.py','jwt.io decoder','hashcat -m 16500'],
+              'LFI':['Manual ../ traversal','ffuf with traversal wordlist'],
+              'Command Injection':['Manual metacharacters: ; | &&','Burp Intruder'],
+              'GraphQL':['InQL Burp extension','graphql-cop','graphiql playground'],
+              'Race Condition':['Burp Turbo Intruder','Python threading','ab -n 20 -c 20'],
+            };
+            const tools = toolMap[hint.category] || ['Burp Suite','curl','Browser DevTools'];
+          %>
+          <% tools.forEach(t => { %>
+          <code style="font-size:11px;background:#F7FAFC;padding:4px 8px;border-radius:4px;border:1px solid #E2E8F0;display:block;"><%= t %></code>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="prog-card">
+        <div class="prog-card-header"><h3>Found It?</h3></div>
+        <div class="prog-card-body" style="display:flex;flex-direction:column;gap:8px;">
+          <a href="/program/submit"  class="prog-btn prog-btn-green" style="justify-content:center;">Submit Report →</a>
+          <a href="/program/hints"   class="prog-btn prog-btn-outline" style="justify-content:center;">← All Hints</a>
+          <a href="/program/flags"   class="prog-btn prog-btn-outline" style="justify-content:center;">🚩 Flag Hunt</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<%- include('../partials/program-footer') %>

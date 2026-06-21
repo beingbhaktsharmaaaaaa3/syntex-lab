@@ -1,0 +1,44 @@
+<%- include('partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Knowledge Base</span>
+      <div class="header-right">
+        <form action="/search" method="GET" style="display:flex;"><div class="search-bar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input type="text" id="header-search" name="q" placeholder="Search articles…"></div></form>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header"><h1>Knowledge Base</h1><p>Product updates, technical guides, and company announcements.</p></div>
+      <div style="display:flex;gap:24px;align-items:start;">
+        <div style="flex:1;">
+          <div class="post-list">
+            <% posts.forEach(p => { %>
+            <div class="post-card">
+              <div class="post-cat"><%= p.category %></div>
+              <div class="post-title"><a href="/blog/<%= p.slug %>"><%= p.title %></a></div>
+              <div class="post-meta">
+                <span>By <%= p.first_name ? p.first_name+' '+p.last_name : p.author %></span>
+                <span><%= new Date(p.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) %></span>
+                <span><%= p.views %> views</span>
+              </div>
+              <div class="post-excerpt"><%= p.excerpt %></div>
+              <div style="margin-top:12px;"><a href="/blog/<%= p.slug %>" class="btn btn-secondary btn-sm">Read more →</a></div>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+        <aside style="width:200px;flex-shrink:0;">
+          <div class="card"><div class="card-header"><h3>Categories</h3></div>
+            <div class="card-body" style="padding:8px 0;">
+              <a href="/blog" style="display:block;padding:8px 20px;font-size:13px;color:<%= !activeCategory?'var(--accent)':'var(--text)' %>;text-decoration:none;">All Posts</a>
+              <% categories.forEach(c => { %>
+              <a href="/blog?category=<%= c %>" style="display:block;padding:8px 20px;font-size:13px;color:<%= activeCategory===c?'var(--accent)':'var(--text)' %>;text-decoration:none;"><%= c.charAt(0).toUpperCase()+c.slice(1) %></a>
+              <% }) %>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('partials/footer') %>
