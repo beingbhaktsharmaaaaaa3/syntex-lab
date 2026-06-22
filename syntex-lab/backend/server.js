@@ -105,7 +105,7 @@ app.use('/orders',    require('./routes/orders'));
 app.use('/tickets',   require('./routes/tickets'));
 app.use('/search',    require('./routes/search'));
 app.use('/contact',   require('./routes/contact'));
-app.use('/',          require('./routes/upload'));
+app.use('/upload',    require('./routes/upload'));
 app.use('/admin',     require('./routes/admin'));
 
 // ─── API routes ───────────────────────────────────────────────────
