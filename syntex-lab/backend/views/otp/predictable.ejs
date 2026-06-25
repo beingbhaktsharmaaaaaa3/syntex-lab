@@ -1,0 +1,96 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Account Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;align-items:start;">
+        <div>
+          <div class="card" style="border-color:var(--warning);">
+            <div class="card-header" style="background:#FFFBEB;">
+              <h3>🔮 Scenario 4 — Predictable OTP</h3>
+              <span class="badge badge-warning">Weak Crypto</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">OTP generated with a predictable algorithm. Compute it offline and submit without receiving it.</p>
+              <div id="result-box" style="display:none;margin-bottom:12px;"></div>
+              <button onclick="requestOTP()" class="btn btn-secondary" style="margin-bottom:12px;">Request OTP (triggers generation)</button>
+              <div class="form-group"><label>Computed OTP</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="Compute it below →"
+                  style="font-size:24px;letter-spacing:8px;text-align:center;font-family:monospace;">
+              </div>
+              <button onclick="computeAndFill()" class="btn btn-warning" style="margin-bottom:8px;width:100%;">🔮 Compute OTP Offline</button>
+              <button onclick="verifyOTP()"     class="btn btn-primary" style="width:100%;">Verify Computed OTP</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;border-color:var(--danger);">
+            <div class="card-header"><h3>Algorithm (Vulnerable)</h3></div>
+            <div class="card-body">
+              <pre style="font-size:11px;">// SERVER CODE (routes/otp.js)
+const minuteTs = Math.floor(Date.now() / 60000);
+const hash = crypto.createHash('md5')
+  .update(`${username}_${minuteTs}`)
+  .digest('hex');
+const otp = (parseInt(hash.slice(0,8), 16) % 1000000)
+  .toString().padStart(6, '0');</pre>
+              <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+                Since <code>username</code> is known and <code>minuteTs</code> is just <code>floor(now/60000)</code>, anyone can compute the OTP without receiving it.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Live OTP Calculator</h3></div>
+            <div class="card-body">
+              <div id="calc-output" style="font-family:monospace;font-size:12px;background:var(--page-bg);padding:12px;border-radius:var(--radius);border:1px solid var(--border);">
+                Click "Compute OTP Offline" to see the prediction.
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Updates every minute. Try current and previous minute if it fails.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+// Client-side MD5 (simplified for demo — matches server algorithm)
+async function md5(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function computeOTP(username, minuteOffset=0) {
+    const minuteTs = Math.floor(Date.now() / 60000) + minuteOffset;
+    const hash     = await md5(`${username}_${minuteTs}`);
+    return (parseInt(hash.slice(0,8), 16) % 1000000).toString().padStart(6,'0');
+}
+async function computeAndFill() {
+    const username = '<%= user.username %>';
+    const otp0 = await computeOTP(username,  0);
+    const otp1 = await computeOTP(username, -1);
+    document.getElementById('otp-input').value = otp0;
+    document.getElementById('calc-output').innerHTML =
+        `Username: <strong>${username}</strong><br>` +
+        `minuteTs: <strong>${Math.floor(Date.now()/60000)}</strong><br>` +
+        `Current minute OTP: <strong style="color:var(--success);font-size:16px;">${otp0}</strong><br>` +
+        `Previous minute OTP: <strong style="color:var(--text-muted);">${otp1}</strong>`;
+}
+async function requestOTP() {
+    await fetch('/otp/predictable/send', {method:'POST', headers:{'Content-Type':'application/json'}});
+    document.getElementById('result-box').style.display='block';
+    document.getElementById('result-box').innerHTML='<div class="alert alert-info">OTP generated server-side. Now compute it below without checking your phone.</div>';
+}
+async function verifyOTP() {
+    const otp  = document.getElementById('otp-input').value;
+    const r    = await fetch('/otp/predictable/verify', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({otp})});
+    const data = await r.json();
+    const box  = document.getElementById('result-box');
+    box.style.display='block';
+    box.innerHTML = data.success
+        ? `<div class="alert alert-success">✅ Predicted correctly!<br><code style="color:var(--success);">🚩 ${data.flag}</code></div>`
+        : `<div class="alert alert-danger">❌ ${data.message}</div>`;
+}
+</script>

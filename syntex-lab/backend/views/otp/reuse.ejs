@@ -1,0 +1,75 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Login Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;align-items:start;">
+        <div>
+          <div class="card" style="border-color:var(--warning);">
+            <div class="card-header" style="background:#FFFBEB;">
+              <h3>♻️ Scenario 5 — OTP Reuse</h3>
+              <span class="badge badge-warning">Not Invalidated</span>
+            </div>
+            <div class="card-body">
+              <% if(otp_hint){ %>
+              <div style="background:var(--success-bg);border:1px solid var(--success);border-radius:var(--radius);padding:10px;margin-bottom:14px;font-size:12px;">
+                🟢 OTP: <strong style="font-size:20px;letter-spacing:6px;font-family:monospace;color:var(--primary)"><%= otp_hint %></strong>
+              </div>
+              <% } %>
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Enter the OTP to verify. Then try submitting the <em>same OTP again</em> — it should still work.</p>
+              <div id="result-box" style="display:none;margin-bottom:14px;"></div>
+              <div class="form-group"><label>OTP Code</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000"
+                  style="font-size:24px;letter-spacing:8px;text-align:center;font-family:monospace;">
+              </div>
+              <button onclick="verifyOTP()" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:6px;">Verify OTP</button>
+              <button onclick="verifyOTP()" class="btn btn-warning btn-sm" style="width:100%;">↩️ Submit Same OTP Again (reuse test)</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3>Use Count</h3></div>
+            <div class="card-body" style="text-align:center;padding:24px;">
+              <div id="use-count" style="font-size:48px;font-weight:800;color:var(--primary);">0</div>
+              <div style="font-size:13px;color:var(--text-muted);">times same OTP verified</div>
+              <div id="flag-box" style="display:none;margin-top:16px;font-family:monospace;font-size:12px;color:var(--success);padding:10px;background:var(--success-bg);border-radius:var(--radius);"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Why This Matters</h3></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+              <p>If an attacker intercepts a valid OTP (via phishing, shoulder surfing, or MitM), they can replay it multiple times within the expiry window since the server never marks it as used.</p>
+              <p style="margin-top:8px;"><strong>Fix:</strong> Delete the OTP from storage immediately after the first successful verification.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+let totalUses = 0;
+async function verifyOTP() {
+    const otp  = document.getElementById('otp-input').value;
+    const r    = await fetch('/otp/reuse/verify', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({otp})});
+    const data = await r.json();
+    totalUses  = data.used_count || totalUses;
+    document.getElementById('use-count').textContent = totalUses;
+    const box = document.getElementById('result-box');
+    box.style.display = 'block';
+    if (data.success) {
+        box.innerHTML = `<div class="alert alert-${totalUses>=2?'warning':'success'}">${totalUses>=2?'⚠️ OTP REUSED':'✅'} ${data.message}</div>`;
+        if (data.flag) {
+            const fb = document.getElementById('flag-box');
+            fb.style.display = 'block';
+            fb.textContent = '🚩 ' + data.flag;
+        }
+    } else {
+        box.innerHTML = `<div class="alert alert-danger">❌ ${data.message}</div>`;
+    }
+}
+</script>

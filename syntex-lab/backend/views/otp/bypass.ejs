@@ -1,0 +1,82 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">2FA Verification</span>
+      <div class="header-right"><a href="/otp" class="btn btn-secondary btn-sm">← OTP Lab</a>
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;max-width:900px;">
+        <div>
+          <div class="card" style="border-color:var(--danger);">
+            <div class="card-header" style="background:var(--danger-bg);">
+              <h3>🪄 Scenario 2 — OTP Parameter Bypass</h3>
+              <span class="badge badge-danger">Logic Flaw</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Enter the 6-digit code sent to your phone. <em>(Hint: you don't need the real code.)</em></p>
+              <div id="result-box" style="display:none;margin-bottom:14px;"></div>
+              <div class="form-group"><label>OTP Code</label>
+                <input type="text" id="otp-input" maxlength="6" placeholder="000000"
+                  style="font-size:24px;letter-spacing:8px;text-align:center;font-family:monospace;">
+              </div>
+              <button onclick="normalVerify()" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:8px;">Verify OTP</button>
+              <a href="/otp/bypass" class="btn btn-secondary btn-sm" style="display:block;text-align:center;">Refresh OTP</a>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;border-color:var(--warning);">
+            <div class="card-header" style="background:#FFFBEB;"><h3>⚠️ Attack — Bypass Parameters</h3></div>
+            <div class="card-body" style="font-size:12px;">
+              <p style="margin-bottom:10px;">Server trusts these client-supplied fields — any one bypasses OTP:</p>
+              <% [
+                ['bypass',       'true'],
+                ['skip_otp',     'true'],
+                ['verified',     'true'],
+                ['status',       '"success"'],
+                ['otp_required', 'false'],
+              ].forEach(([k,v]) => { %>
+              <button onclick="tryBypass('<%= k %>','<%= v ==='true'?true:v==='false'?false:v.replace(/\"/g,'') %>')"
+                class="btn btn-warning btn-sm" style="margin:3px;font-family:monospace;font-size:11px;">
+                "<%= k %>": <%= v %>
+              </button>
+              <% }) %>
+              <div style="margin-top:12px;">
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">Manual Burp Payload:</div>
+                <pre style="font-size:11px;">POST /otp/bypass/verify HTTP/1.1
+
+{"otp":"000000","bypass":true}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Why This Happens</h3></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+              <p>Developers sometimes add debug/testing flags to skip 2FA during development and forget to remove them. The server checks <code>if (req.body.bypass === true)</code> before checking the OTP — so any request with that field wins.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>
+<script>
+async function send(body) {
+    const r    = await fetch('/otp/bypass/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const data = await r.json();
+    const box  = document.getElementById('result-box');
+    box.style.display = 'block';
+    if (data.success) {
+        box.innerHTML = `<div class="alert alert-success">✅ BYPASSED!<br><code style="color:var(--success);">🚩 ${data.flag}</code><br><small>Method: ${data.method||'direct'} | Bypassed with: ${JSON.stringify(data.bypassed_with||{})}</small></div>`;
+    } else {
+        box.innerHTML = `<div class="alert alert-danger">❌ ${data.message}</div>`;
+    }
+}
+function normalVerify() { send({ otp: document.getElementById('otp-input').value }); }
+function tryBypass(key, val) {
+    const body = { otp: '000000' };
+    body[key] = val;
+    send(body);
+}
+</script>
