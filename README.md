@@ -31,7 +31,7 @@ Wait ~30 seconds for seeding, then visit:
 - `http://localhost:3000` — target website
 - `http://localhost:3000/program` — bug bounty platform
 
-Full setup, `/etc/hosts` config, and Windows/WSL instructions are in [docs/setup.md](docs/setup.md).
+Full setup, `/etc/hosts` config, and Windows/WSL instructions are in [docs/setup.md](syntex-lab/docs/setup.md).
 
 ---
 
@@ -135,7 +135,7 @@ sudo bash -c 'cat >> /etc/hosts << "EOF"
 EOF'
 ```
 
-27 subdomains total. `subfinder` will not discover them (no certificate transparency for `.local` domains) — use `ffuf` vhost fuzzing or the included `dns/` container with `gobuster dns` instead. Details in [docs/methodology.md](docs/methodology.md).
+27 subdomains total. `subfinder` will not discover them (no certificate transparency for `.local` domains) — use `ffuf` vhost fuzzing or the included `dns/` container with `gobuster dns` instead. Details in [docs/methodology.md](syntex-lab/docs/methodology.md).
 
 ---
 
