@@ -1,0 +1,42 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header"><span class="header-title">Cache Deception Lab</span>
+    <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+  </div>
+  <div class="page-body">
+    <div class="page-header"><h1>Web Cache Deception</h1><p>Trick the cache into storing PRIVATE pages under PUBLIC-looking URLs.</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;align-items:start;">
+      <div>
+        <div class="card mb-4">
+          <div class="card-header"><h3>🟢 Easy — Static Extension Trick</h3></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">CDNs often cache anything ending in .css/.js as static, regardless of actual content.</p>
+            <button onclick="fetchUrl('/profile/me.css')" class="btn btn-primary" style="width:100%;">Fetch /profile/me.css</button>
+          </div>
+        </div>
+        <div class="card" style="border-color:var(--warning);">
+          <div class="card-header" style="background:#FFFBEB;"><h3>🟡 Medium — Path Confusion</h3></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Append a fake static extension to a dynamic path segment.</p>
+            <button onclick="fetchUrl('/account/settings/x.js')" class="btn btn-warning" style="width:100%;">Fetch /account/settings/x.js</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>Response</h3></div>
+          <div id="result" style="font-size:11px;padding:14px;min-height:200px;background:var(--page-bg);border-radius:var(--radius);border:1px solid var(--border);white-space:pre-wrap;">Click a button to test...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+async function fetchUrl(path) {
+  const r = await fetch(path);
+  const cacheControl = r.headers.get('cache-control');
+  const text = await r.text();
+  document.getElementById('result').textContent = `Cache-Control: ${cacheControl}\n\n${text}`;
+}
+</script>

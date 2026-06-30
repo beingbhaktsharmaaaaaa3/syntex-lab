@@ -1,0 +1,59 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header"><span class="header-title">HTTP Request Smuggling</span>
+    <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+  </div>
+  <div class="page-body">
+    <div class="page-header"><h1>HTTP Request Smuggling (Simulation)</h1><p>Real smuggling requires raw socket access via Burp Suite — this lab simulates the detection logic so you understand the CL.TE / TE.TE concept.</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;align-items:start;">
+      <div>
+        <div class="card mb-4" style="border-color:var(--warning);">
+          <div class="card-header" style="background:#FFFBEB;"><h3>🟡 Medium — CL.TE Desync</h3></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Front-end uses Content-Length, back-end uses Transfer-Encoding — they disagree on request boundaries.</p>
+            <button onclick="testSmuggle('front')" class="btn btn-warning" style="width:100%;">Simulate CL.TE Request</button>
+          </div>
+        </div>
+        <div class="card" style="border-color:var(--danger);">
+          <div class="card-header" style="background:var(--danger-bg);"><h3>🔴 Hard — TE.TE Obfuscation</h3></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Both servers process Transfer-Encoding, but one is tricked via header obfuscation.</p>
+            <button onclick="testSmuggle('back')" class="btn btn-danger" style="width:100%;">Simulate TE.TE Obfuscation</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb-4">
+          <div class="card-header"><h3>Result</h3></div>
+          <div id="result" style="font-size:11px;padding:14px;min-height:120px;background:var(--page-bg);border-radius:var(--radius);border:1px solid var(--border);white-space:pre-wrap;">Click a button to simulate...</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Real-World Testing (Burp Suite)</h3></div>
+          <div class="card-body">
+            <pre style="font-size:10px;">POST /smuggling/front-end HTTP/1.1
+Host: syntex.local
+Content-Length: 13
+Transfer-Encoding: chunked
+
+0
+
+SMUGGLED</pre>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">Use Burp Suite's HTTP Request Smuggler extension against real infrastructure with multiple proxy layers for genuine smuggling.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+async function testSmuggle(mode) {
+  const endpoint = mode === 'front' ? '/smuggling/front-end' : '/smuggling/back-end';
+  const body = mode === 'front'
+    ? "POST / HTTP/1.1\r\nContent-Length: 13\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nSMUGGLED"
+    : "POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\nTransfer-Encoding: x\r\n\r\n0\r\n\r\n";
+  const r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'text/plain'}, body });
+  const d = await r.json();
+  document.getElementById('result').textContent = JSON.stringify(d, null, 2);
+}
+</script>

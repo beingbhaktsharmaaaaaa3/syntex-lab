@@ -1,0 +1,74 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header"><span class="header-title">Client-Side Template Lab</span>
+    <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+  </div>
+  <div class="page-body">
+    <div class="page-header"><h1>Profile Bio — Live Preview</h1><p>Your bio is rendered using a client-side template engine (AngularJS-style {{ }} expression evaluation), distinct from server-side SSTI.</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;align-items:start;">
+      <div>
+        <div class="card mb-4">
+          <div class="card-header"><h3>🟢 Easy — Basic Expression Evaluation</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label>Your Bio</label>
+              <textarea id="bio-input" rows="4" placeholder="Tell us about yourself...">Software engineer who loves {{7*7}}</textarea>
+            </div>
+            <button onclick="renderPreview()" class="btn btn-primary" style="width:100%;">Update Live Preview</button>
+          </div>
+        </div>
+        <div class="card" style="border-color:var(--warning);">
+          <div class="card-header" style="background:#FFFBEB;"><h3>🟡 Medium — Sandbox Escape to XSS</h3></div>
+          <div class="card-body" style="font-size:12px;">
+            <button onclick="setBio('{{constructor.constructor(\'alert(document.cookie)\')()}}')" class="btn btn-warning btn-sm" style="width:100%;">Load sandbox escape payload</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>Live Preview (Client-Side Rendered)</h3></div>
+          <div class="card-body">
+            <div id="preview" style="background:var(--page-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;min-height:80px;font-size:13px;"></div>
+          </div>
+        </div>
+        <div class="card mt-3" id="flag-card" style="display:none;border-color:var(--success);">
+          <div class="card-body" style="font-family:monospace;font-size:12px;color:var(--success);"></div>
+        </div>
+        <div class="card mt-3">
+          <div class="card-header"><h3>Why This Is Different from SSTI</h3></div>
+          <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+            <p>SSTI executes on the SERVER (Node/Python/Java template engine). CSTI executes in the VICTIM'S BROWSER via a frontend framework that evaluates expressions like <code>{{ }}</code> against the DOM context — common in older AngularJS apps lacking strict contextual escaping.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+// VULNERABILITY: simplified Angular-like {{ }} expression evaluator
+// This is THE vulnerability — client-side eval of user-controlled {{ }} content
+function vulnerableTemplateRender(template) {
+  return template.replace(/\{\{(.+?)\}\}/g, (match, expr) => {
+    try {
+      // VULNERABILITY: direct eval of user input — exactly what AngularJS <1.6 sandbox escapes exploited
+      return eval(expr);
+    } catch (e) {
+      return match;
+    }
+  });
+}
+
+function setBio(text) { document.getElementById('bio-input').value = text; renderPreview(); }
+
+function renderPreview() {
+  const bio = document.getElementById('bio-input').value;
+  const rendered = vulnerableTemplateRender(bio);
+  document.getElementById('preview').innerHTML = rendered;
+
+  if (bio.includes('constructor.constructor') || bio.includes('alert(')) {
+    document.getElementById('flag-card').style.display = 'block';
+    document.querySelector('#flag-card .card-body').textContent = '🚩 FLAG{CSTI_CLIENT_TEMPLATE_SANDBOX_ESCAPE_XSS}';
+  }
+}
+renderPreview();
+</script>
