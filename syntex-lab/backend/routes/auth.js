@@ -19,7 +19,7 @@ router.get('/login', (req, res) => {
     });
 });
 
-// POST /login — VULNERABILITY: SQL injection, open redirect, weak hashing, no rate limiting
+// POST /login — VULNERABILITY: SQL injection, open redirect, weak hashing
 router.post('/login', rateLimit, async (req, res) => {
     const { username, password } = req.body;
     const redirect = req.query.redirect || req.body.redirect || '/dashboard';
@@ -31,13 +31,13 @@ router.post('/login', rateLimit, async (req, res) => {
     try {
         const hashedPassword = md5(password);
 
-        // VULNERABILITY: SQL injection via string concatenation
+        // VULNERABILITY: SQL injection via string concatenation (intentional for lab)
         const query = `SELECT * FROM users WHERE username = '${username}' AND password_hash = '${hashedPassword}' AND is_active = true`;
         const result = await db.query(query);
 
         if (result.rows.length === 0) {
-            // VULNERABILITY: Different error message reveals user existence
-            const checkUser = await db.query(`SELECT id FROM users WHERE username = '${username}'`);
+            // VULNERABILITY: Different error message reveals user existence (intentional for lab)
+            const checkUser = await db.query(`SELECT id FROM users WHERE username = $1`, [username]);
             const msg = checkUser.rows.length > 0
                 ? 'Incorrect password. Please try again.'
                 : 'No account found with that username.';
@@ -60,7 +60,7 @@ router.post('/login', rateLimit, async (req, res) => {
         // Update last login
         await db.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
 
-        // VULNERABILITY: Open redirect — no validation on redirect parameter
+        // VULNERABILITY: Open redirect — no validation on redirect parameter (intentional for lab)
         return res.redirect(redirect);
 
     } catch (err) {
@@ -89,21 +89,21 @@ router.post('/register', async (req, res) => {
         return res.render('register', { title: 'Create Account', error: 'Passwords do not match.', user: null });
     }
 
-    // VULNERABILITY: No password strength requirements
+    // VULNERABILITY: No password strength requirements (intentional for lab)
     if (password.length < 4) {
         return res.render('register', { title: 'Create Account', error: 'Password must be at least 4 characters.', user: null });
     }
 
     try {
-        // VULNERABILITY: No email validation
+        // VULNERABILITY: No email validation (intentional for lab)
         const hashedPassword = md5(password);
         const apiKey = 'sk_live_' + crypto.randomBytes(16).toString('hex');
 
-        // VULNERABILITY: SQL injection possible in registration
+        // FIX: Use parameterized queries to prevent SQL injection
         const insertQ = `INSERT INTO users (username, email, password_hash, first_name, last_name, api_key)
-                         VALUES ('${username}', '${email}', '${hashedPassword}', '${first_name}', '${last_name}', '${apiKey}')
+                         VALUES ($1, $2, $3, $4, $5, $6)
                          RETURNING id, username, role`;
-        const result = await db.query(insertQ);
+        const result = await db.query(insertQ, [username, email, hashedPassword, first_name || '', last_name || '', apiKey]);
         const user = result.rows[0];
 
         req.session.userId   = user.id;
@@ -115,7 +115,7 @@ router.post('/register', async (req, res) => {
 
     } catch (err) {
         let error = 'Registration failed. Please try again.';
-        // VULNERABILITY: DB error info leak
+        // VULNERABILITY: DB error info leak (intentional for lab)
         if (err.message.includes('duplicate key')) {
             error = `Account already exists: ${err.detail || err.message}`;
         } else {
@@ -127,9 +127,9 @@ router.post('/register', async (req, res) => {
 
 // GET /logout
 router.get('/logout', (req, res) => {
-    // VULNERABILITY: Session not fully invalidated server-side; session ID reuse possible
+    // VULNERABILITY: Session not fully invalidated server-side; session ID reuse possible (intentional for lab)
     req.session.destroy(() => {
-        // VULNERABILITY: Open redirect via ?redirect= after logout
+        // VULNERABILITY: Open redirect via ?redirect= after logout (intentional for lab)
         const redirect = req.query.redirect || '/';
         res.clearCookie('connect.sid');
         res.redirect(redirect);
@@ -141,15 +141,15 @@ router.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { title: 'Reset Password — Syntex Solutions', message: null, error: null, user: null });
 });
 
-// POST /forgot-password — VULNERABILITY: No rate limiting, predictable token, user enumeration
+// POST /forgot-password — VULNERABILITY: No rate limiting, predictable token, user enumeration (intentional for lab)
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
 
     try {
-        const result = await db.query(`SELECT id, username FROM users WHERE email = '${email}'`);
+        const result = await db.query(`SELECT id, username FROM users WHERE email = $1`, [email]);
 
         if (result.rows.length === 0) {
-            // VULNERABILITY: Different response reveals whether email exists
+            // VULNERABILITY: Different response reveals whether email exists (intentional for lab)
             return res.render('forgot-password', {
                 title: 'Reset Password',
                 error: 'No account found with that email address.',
@@ -159,7 +159,7 @@ router.post('/forgot-password', async (req, res) => {
 
         const user = result.rows[0];
 
-        // VULNERABILITY: Predictable reset token — MD5 of username + timestamp rounded to hour
+        // VULNERABILITY: Predictable reset token — MD5 of username + timestamp rounded to hour (intentional for lab)
         const tokenBase = `${user.username}_${Math.floor(Date.now() / 3600000)}`;
         const token = `reset_${user.username}_${md5(tokenBase)}`;
 
@@ -186,11 +186,12 @@ router.get('/reset-password', async (req, res) => {
     const { token } = req.query;
 
     try {
-        // VULNERABILITY: SQL injection in token lookup
+        // FIX: Use parameterized query to prevent SQL injection
         const result = await db.query(
             `SELECT pr.*, u.username FROM password_resets pr
              JOIN users u ON u.id = pr.user_id
-             WHERE pr.token = '${token}' AND pr.used = false AND pr.expires_at > NOW()`
+             WHERE pr.token = $1 AND pr.used = false AND pr.expires_at > NOW()`,
+            [token]
         );
 
         if (result.rows.length === 0) {
@@ -213,10 +214,12 @@ router.post('/reset-password', async (req, res) => {
     }
 
     try {
+        // FIX: Use parameterized query to prevent SQL injection
         const result = await db.query(
             `SELECT pr.*, u.id as uid FROM password_resets pr
              JOIN users u ON u.id = pr.user_id
-             WHERE pr.token = '${token}' AND pr.used = false AND pr.expires_at > NOW()`
+             WHERE pr.token = $1 AND pr.used = false AND pr.expires_at > NOW()`,
+            [token]
         );
 
         if (result.rows.length === 0) {
@@ -226,8 +229,9 @@ router.post('/reset-password', async (req, res) => {
         const reset = result.rows[0];
         const newHash = md5(password);
 
-        await db.query(`UPDATE users SET password_hash = '${newHash}' WHERE id = ${reset.uid}`);
-        await db.query(`UPDATE password_resets SET used = true WHERE token = '${token}'`);
+        // FIX: Use parameterized queries
+        await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, reset.uid]);
+        await db.query(`UPDATE password_resets SET used = true WHERE token = $1`, [token]);
 
         res.redirect('/login?message=Password+updated+successfully');
 
