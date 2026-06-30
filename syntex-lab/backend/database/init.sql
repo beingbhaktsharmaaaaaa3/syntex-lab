@@ -384,3 +384,10 @@ CREATE TABLE IF NOT EXISTS first_blood_claims (
 -- One valid completion per user per vuln (for challenge tracking)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_user_vuln_complete
     ON user_flags(user_id, flag_slug);
+
+CREATE TABLE IF NOT EXISTS employees (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL, full_name VARCHAR(100), email VARCHAR(100), department VARCHAR(50), job_title VARCHAR(100), phone VARCHAR(30), location VARCHAR(80), salary INTEGER, ssn_last4 VARCHAR(4), access_level VARCHAR(20) DEFAULT 'standard', internal_notes TEXT, is_active BOOLEAN DEFAULT true, hire_date DATE DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS invoices (id SERIAL PRIMARY KEY, invoice_number VARCHAR(30) UNIQUE, user_id INTEGER REFERENCES users(id), company_name VARCHAR(100), amount DECIMAL(10,2), tax_amount DECIMAL(10,2), status VARCHAR(20) DEFAULT 'paid', billing_email VARCHAR(100), card_last4 VARCHAR(4), notes TEXT, due_date DATE DEFAULT NOW()+30, created_at TIMESTAMP DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS api_tokens_v2 (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), token VARCHAR(80) UNIQUE NOT NULL, name VARCHAR(100), scope TEXT, expires_at TIMESTAMP, is_revoked BOOLEAN DEFAULT false, last_used TIMESTAMP, created_at TIMESTAMP DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS tenants (id SERIAL PRIMARY KEY, slug VARCHAR(50) UNIQUE, name VARCHAR(100), plan VARCHAR(30), owner_user_id INTEGER REFERENCES users(id), config JSONB DEFAULT '{}', secret_key VARCHAR(80), created_at TIMESTAMP DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS tenant_memberships (id SERIAL PRIMARY KEY, tenant_id INTEGER REFERENCES tenants(id), user_id INTEGER REFERENCES users(id), role VARCHAR(20) DEFAULT 'member', UNIQUE(tenant_id, user_id));
+CREATE TABLE IF NOT EXISTS webhooks (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), url VARCHAR(500), secret VARCHAR(80), events TEXT[], is_active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT NOW());
