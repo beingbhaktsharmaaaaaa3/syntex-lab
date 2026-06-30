@@ -107,6 +107,7 @@ app.use('/search',    require('./routes/search'));
 app.use('/contact',   require('./routes/contact'));
 app.use('/upload',    require('./routes/upload'));
 app.use('/admin',     require('./routes/admin'));
+app.use('/',          require('./routes/missing-vulns'));
 
 // ─── API routes ───────────────────────────────────────────────────
 const { chatApiRouter } = require('./routes/websocket');
