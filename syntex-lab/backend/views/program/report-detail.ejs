@@ -6,35 +6,35 @@
     const statLabels = {new:'🆕 New',needs_more_info:'ℹ️ Needs Review',accepted:'✅ Bug Found',duplicate:'🔄 Duplicate',informative:'ℹ️ Informative',not_applicable:'❌ N/A',resolved:'✔️ Resolved'};
   %>
 
-  <!-- First blood banner -->
+  <!-- Verified banner (no points shown) -->
   <% if (justVerified && isFirstBlood) { %>
   <div style="background:linear-gradient(135deg,#7B341E,#C05621);color:#fff;border-radius:8px;padding:20px 24px;margin-bottom:20px;display:flex;gap:16px;align-items:center;">
     <span style="font-size:36px;">🩸</span>
     <div>
-      <div style="font-size:17px;font-weight:800;">FIRST BLOOD! You found it first!</div>
-      <div style="opacity:0.85;font-size:13px;margin-top:2px;">+50% bonus points awarded. You're on the leaderboard! <%= report.points_awarded ? '+'+report.points_awarded+' pts total' : '' %></div>
+      <div style="font-size:17px;font-weight:800;">FIRST BLOOD! You found this vulnerability first.</div>
+      <div style="opacity:0.85;font-size:13px;margin-top:2px;">Report auto-accepted. You are on the leaderboard.</div>
     </div>
   </div>
   <% } else if (justVerified) { %>
   <div style="background:#25855A;color:#fff;border-radius:8px;padding:18px 24px;margin-bottom:20px;display:flex;gap:14px;align-items:center;">
-    <span style="font-size:32px;">🎉</span>
+    <span style="font-size:32px;">✅</span>
     <div>
       <div style="font-size:16px;font-weight:800;">Flag Verified — Bug Found!</div>
-      <div style="opacity:0.85;font-size:13px;margin-top:2px;">Report auto-accepted. <%= report.points_awarded ? '+'+report.points_awarded+' pts' : '' %> added to your score.</div>
+      <div style="opacity:0.85;font-size:13px;margin-top:2px;">Your report has been automatically accepted.</div>
     </div>
   </div>
   <% } else if (isDuplicate) { %>
   <div style="background:#4A5568;color:#fff;border-radius:8px;padding:16px 24px;margin-bottom:20px;display:flex;gap:14px;align-items:center;">
     <span style="font-size:28px;">🔄</span>
     <div><div style="font-size:15px;font-weight:700;">Duplicate — Already Submitted</div>
-    <div style="opacity:0.8;font-size:12px;margin-top:2px;">You already submitted this flag. No additional points awarded.</div></div>
+    <div style="opacity:0.8;font-size:12px;margin-top:2px;">You already submitted this flag. No additional credit awarded.</div></div>
   </div>
   <% } %>
 
   <div style="display:flex;gap:24px;align-items:start;flex-wrap:wrap;">
     <div style="flex:1;min-width:0;">
 
-      <!-- Flag validation status -->
+      <!-- Flag verification status (no points shown) -->
       <% if (report.flag_slug) { %>
       <div class="prog-card" style="margin-bottom:16px;border-width:2px;border-color:<%= report.flag_valid===true ? '#25855A' : report.flag_valid===false ? '#E53E3E' : '#ECC94B' %>;">
         <div class="prog-card-body" style="background:<%= report.flag_valid===true?'#F0FFF4':report.flag_valid===false?'#FFF5F5':'#FFFFF0' %>;border-radius:inherit;">
@@ -48,10 +48,9 @@
               <div style="font-size:13px;color:var(--prog-muted);margin-top:6px;"><%= report.validation_message %></div>
               <% } %>
               <% if (report.flag_valid===true && report.flag_title) { %>
-              <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
                 <span style="font-size:12px;background:#C6F6D5;color:#22543D;padding:3px 10px;border-radius:12px;font-weight:700;">Matched: <%= report.flag_title %></span>
                 <% if(report.flag_category){ %><span style="font-size:12px;background:#BEE3F8;color:#2A4365;padding:3px 10px;border-radius:12px;"><%= report.flag_category %></span><% } %>
-                <% if(report.points_awarded>0){ %><span style="font-size:12px;background:#FEFCBF;color:#744210;padding:3px 10px;border-radius:12px;font-weight:700;">+<%= report.points_awarded %> pts</span><% } %>
                 <% if(report.first_blood){ %><span style="font-size:12px;background:#FED7D7;color:#742A2A;padding:3px 10px;border-radius:12px;font-weight:700;">🩸 First Blood!</span><% } %>
               </div>
               <% } %>
@@ -68,7 +67,7 @@
           <span style="font-size:24px;opacity:0.4;">🚩</span>
           <div style="flex:1;">
             <div style="font-weight:600;font-size:13px;">No flag submitted — awaiting manual triage</div>
-            <div style="font-size:12px;color:var(--prog-muted);">Find the FLAG{...} by exploiting the vulnerability and resubmit for instant verification.</div>
+            <div style="font-size:12px;color:var(--prog-muted);">Find the FLAG{...} by exploiting the vulnerability for instant verification.</div>
           </div>
           <a href="/program/flags" class="prog-btn prog-btn-outline" style="font-size:12px;white-space:nowrap;">Flag Hunt →</a>
         </div>
@@ -84,14 +83,15 @@
               <span class="prog-badge <%= sevColors[report.severity]||'prog-badge-gray' %>"><%= report.severity %></span>
               <span class="prog-badge <%= statColors[report.status]||'prog-badge-gray' %>"><%= statLabels[report.status]||report.status %></span>
               <span class="prog-badge prog-badge-gray"><%= report.vuln_type.replace(/_/g,' ') %></span>
-              <% if(report.flag_valid===true){%><span class="prog-badge prog-badge-green">🚩 Flag Verified</span><%}%>
-              <% if(report.first_blood){%><span class="prog-badge" style="background:#FED7D7;color:#742A2A;">🩸 First Blood</span><%}%>
+              <% if(report.flag_valid===true){ %><span class="prog-badge prog-badge-green">🚩 Flag Verified</span><% } %>
+              <% if(report.first_blood){ %><span class="prog-badge" style="background:#FED7D7;color:#742A2A;">🩸 First Blood</span><% } %>
             </div>
           </div>
-          <% if(report.bounty_amount>0||report.points_awarded>0){%>
+          <!-- Bounty amount shown but NO points -->
+          <% if(report.bounty_amount > 0){ %>
           <div style="text-align:right;flex-shrink:0;">
-            <% if(report.bounty_amount>0){%><div style="font-size:22px;font-weight:800;color:#25855A;">$<%= parseFloat(report.bounty_amount).toLocaleString() %></div><%}%>
-            <% if(report.points_awarded>0){%><div style="font-size:15px;font-weight:700;color:#ECC94B;">+<%= report.points_awarded %> pts</div><%}%>
+            <div style="font-size:22px;font-weight:800;color:#25855A;">$<%= parseFloat(report.bounty_amount).toLocaleString() %></div>
+            <div style="font-size:11px;color:var(--prog-muted);">Bounty awarded</div>
           </div>
           <% } %>
         </div>
@@ -99,8 +99,8 @@
           <div style="font-size:12px;color:var(--prog-muted);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;">
             <span>By <strong><%= report.reporter %></strong></span>
             <span>Submitted <%= new Date(report.created_at).toLocaleString() %></span>
-            <% if(report.affected_asset){%><span>Asset: <code style="font-size:11px;"><%= report.affected_asset %></code></span><%}%>
-            <% if(report.affected_url){%><span>Endpoint: <code style="font-size:11px;"><%= report.affected_url %></code></span><%}%>
+            <% if(report.affected_asset){ %><span>Asset: <code style="font-size:11px;"><%= report.affected_asset %></code></span><% } %>
+            <% if(report.affected_url){ %><span>Endpoint: <code style="font-size:11px;"><%= report.affected_url %></code></span><% } %>
           </div>
 
           <% [['Steps to Reproduce',report.steps],['Impact',report.impact],['Suggested Fix',report.suggested_fix]].forEach(([h,b])=>{ if(!b) return; %>
@@ -143,9 +143,11 @@
             <code style="font-size:11px;color:<%= report.flag_valid===true?'#25855A':report.flag_valid===false?'#E53E3E':'var(--prog-muted)' %>;">
               <%= report.flag_submitted || 'None' %>
             </code>
-            <div style="margin-top:4px;"><span class="prog-badge <%= report.flag_valid===true?'prog-badge-green':report.flag_valid===false?'prog-badge-red':'prog-badge-gray' %>" style="font-size:10px;">
-              <%= report.flag_valid===true?'✅ Valid':report.flag_valid===false?'❌ Invalid':'⏳ Unverified' %>
-            </span></div>
+            <div style="margin-top:6px;">
+              <span class="prog-badge <%= report.flag_valid===true?'prog-badge-green':report.flag_valid===false?'prog-badge-red':'prog-badge-gray' %>" style="font-size:10px;">
+                <%= report.flag_valid===true?'✅ Valid':report.flag_valid===false?'❌ Invalid':'⏳ Unverified' %>
+              </span>
+            </div>
           </div>
           <form action="/program/reports/<%= report.id %>/triage" method="POST">
             <div style="margin-bottom:10px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">STATUS</label>
@@ -164,8 +166,6 @@
               <div><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">BOUNTY ($)</label>
               <input type="number" name="bounty_amount" min="0" step="50" value="<%= report.bounty_amount||0 %>" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;box-sizing:border-box;"></div>
             </div>
-            <div style="margin-bottom:10px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">POINTS OVERRIDE</label>
-            <input type="number" name="points_override" min="0" placeholder="Leave blank to keep current" value="" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;box-sizing:border-box;"></div>
             <div style="margin-bottom:10px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">DUPLICATE OF #</label>
             <input type="number" name="duplicate_of" value="<%= report.duplicate_of||'' %>" placeholder="Leave blank if not dup" style="width:100%;padding:7px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;box-sizing:border-box;"></div>
             <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--prog-muted);display:block;margin-bottom:4px;">TRIAGE NOTES</label>
@@ -176,26 +176,30 @@
       </div>
       <% } %>
 
-      <!-- Report metadata -->
+      <!-- Report info (NO points shown) -->
       <div class="prog-card" style="margin-bottom:16px;">
         <div class="prog-card-header"><h3>Report Info</h3></div>
         <div class="prog-card-body">
           <table style="font-size:12px;width:100%;border-collapse:collapse;">
             <% [
-              ['ID',      '#'+report.id],
+              ['ID',       '#'+report.id],
               ['Reporter', report.reporter],
               ['Severity', report.severity],
               ['Status',   statLabels[report.status]||report.status],
-              ['Flag',     report.flag_valid===true?'✅ Verified':report.flag_valid===false?'❌ Invalid':'⏳ Pending'],
-              ['Points',   report.points_awarded>0?'+'+report.points_awarded+' pts':'—'],
+              ['Verified', report.flag_valid===true?'✅ Yes':report.flag_valid===false?'❌ Invalid flag':'⏳ Pending'],
               ['1st Blood',report.first_blood?'🩸 Yes':'—'],
               ['Submitted',new Date(report.created_at).toLocaleDateString()],
             ].forEach(([k,v])=>{ %>
-            <tr><td style="padding:5px 0;color:var(--prog-muted);white-space:nowrap;"><%= k %></td><td style="padding:5px 0 5px 8px;font-weight:600;"><%= v %></td></tr>
+            <tr><td style="padding:5px 0;color:var(--prog-muted);white-space:nowrap;"><%= k %></td>
+            <td style="padding:5px 0 5px 8px;font-weight:600;"><%= v %></td></tr>
             <% }) %>
+            <% if(report.bounty_amount>0){ %>
+            <tr><td style="padding:5px 0;color:var(--prog-muted);">Bounty</td>
+            <td style="padding:5px 0 5px 8px;font-weight:700;color:#25855A;">$<%= parseFloat(report.bounty_amount).toLocaleString() %></td></tr>
+            <% } %>
           </table>
           <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
-            <a href="/program/submit" class="prog-btn prog-btn-green" style="justify-content:center;">+ New Report</a>
+            <a href="/program/submit"  class="prog-btn prog-btn-green"  style="justify-content:center;">+ New Report</a>
             <a href="/program/reports" class="prog-btn prog-btn-outline" style="justify-content:center;">← All Reports</a>
           </div>
         </div>
