@@ -5,6 +5,7 @@ const router  = express.Router();
 const db      = require('../database/db');
 const { exec } = require('child_process');
 const { requireAdmin } = require('../middleware/auth');
+const { setLabMode, getLabMode } = require('../middleware/program');
 
 // All admin routes protected by requireAdmin
 // VULNERABILITY: requireAdmin only checks req.session.role OR req.cookies.role
@@ -124,6 +125,7 @@ router.get('/settings', (req, res) => {
         stripe_sk:        process.env.STRIPE_SK,
         internal_api_key: process.env.INTERNAL_API_KEY,
         smtp_pass:        process.env.SMTP_PASS,
+        lab_mode:         getLabMode(),
     };
 
     res.render('admin/settings', {
@@ -131,6 +133,34 @@ router.get('/settings', (req, res) => {
         config,
         user: req.session.user,
         success: req.query.saved ? 'Settings saved.' : null,
+    });
+});
+
+// ✅ NEW: POST /admin/lab-mode — Change difficulty dynamically
+router.post('/lab-mode', (req, res) => {
+    const { mode } = req.body;
+    
+    if (!mode) {
+        return res.json({ success: false, error: 'Mode required' });
+    }
+
+    try {
+        setLabMode(mode);
+        res.json({ 
+            success: true, 
+            message: `Lab mode changed to: ${mode}`, 
+            currentMode: getLabMode() 
+        });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
+// ✅ NEW: GET /admin/lab-mode — Get current difficulty mode
+router.get('/lab-mode', (req, res) => {
+    res.json({ 
+        currentMode: getLabMode(),
+        availableModes: ['beginner', 'intermediate', 'hard', 'realistic']
     });
 });
 
