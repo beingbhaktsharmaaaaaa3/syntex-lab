@@ -7,6 +7,9 @@
 
 const PROGRAM_PATHS = ['/hints', '/reports', '/challenges', '/flags', '/bug-bounty', '/hall-of-fame', '/leaderboard', '/scope', '/solutions'];
 
+// In-memory mode override (persists during container runtime)
+let overrideMode = null;
+
 // Middleware: blocks legacy bounty paths on main site
 function blockBountyOnMainSite(req, res, next) {
     const host  = req.headers['x-vhost'] || req.headers.host || '';
@@ -34,8 +37,19 @@ function requireProgramHost(req, res, next) {
 }
 
 // LAB_MODE visibility helper (used in routes + views)
+// ✅ FIXED: Now checks override first, then env var
 function getLabMode() {
+    if (overrideMode) return overrideMode.toLowerCase();
     return (process.env.LAB_MODE || 'beginner').toLowerCase();
+}
+
+// Set override mode (for dynamic switching)
+function setLabMode(newMode) {
+    if (!['beginner', 'intermediate', 'hard', 'realistic'].includes(newMode.toLowerCase())) {
+        throw new Error(`Invalid mode: ${newMode}`);
+    }
+    overrideMode = newMode.toLowerCase();
+    console.log(`[LAB_MODE] Changed to: ${overrideMode}`);
 }
 
 function labFeatureVisible(feature) {
@@ -74,4 +88,4 @@ function enforceLabMode(feature) {
     };
 }
 
-module.exports = { blockBountyOnMainSite, requireProgramHost, enforceLabMode, getLabMode, labFeatureVisible };
+module.exports = { blockBountyOnMainSite, requireProgramHost, enforceLabMode, getLabMode, setLabMode, labFeatureVisible };
