@@ -1,0 +1,26 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">2FA Verification</span></div>
+    <div class="page-body">
+      <div style="max-width:440px;">
+        <% if(result === 'success'){ %>
+        <div class="alert alert-success">✅ 2FA Passed! (after <%= attempts %> attempt<%= attempts!==1?'s':'' %>)</div>
+        <% if(flag){ %><div style="margin-top:10px;font-family:monospace;font-size:13px;color:var(--danger);padding:12px;background:var(--danger-bg);border-radius:var(--radius);">🚩 <%= flag %></div><% } %>
+        <% } %>
+        <div class="card">
+          <div class="card-header"><h3>Enter 6-Digit Code</h3></div>
+          <div class="card-body">
+            <% if(result === 'expired'){ %><div class="alert alert-warning">Code expired. <a href="/2fa">Get a new code</a>.</div>
+            <% } else if(result === 'invalid'){ %><div class="alert alert-danger">Invalid code. Attempt #<%= attempts %>. (No lockout — keep trying)</div><% } %>
+            <% if(otp_hint){ %><div style="margin-bottom:12px;font-size:12px;color:var(--text-muted);">Beginner hint — OTP: <strong style="color:var(--primary);font-size:16px;"><%= otp_hint %></strong></div><% } %>
+            <form action="/2fa" method="POST">
+              <div class="form-group"><label>Authentication Code</label><input type="text" name="otp" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="font-size:22px;letter-spacing:8px;text-align:center;" required autofocus></div>
+              <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Verify</button>
+            </form>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>

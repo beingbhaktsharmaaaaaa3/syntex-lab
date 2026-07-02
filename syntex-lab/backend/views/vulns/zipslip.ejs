@@ -1,0 +1,47 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">ZIP Archive Upload</span></div>
+    <div class="page-body">
+      <div class="page-header"><h1>Upload ZIP Archive</h1><p>Upload a ZIP file containing invoice batches or report bundles.</p></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+        <div>
+          <div class="card">
+            <div class="card-header"><h3>Upload Archive</h3></div>
+            <div class="card-body">
+              <form action="/zip-upload" method="POST" enctype="multipart/form-data">
+                <div class="form-group"><label>ZIP File</label><input type="file" name="archive" accept=".zip"></div>
+                <button type="submit" class="btn btn-primary">Upload & Extract</button>
+              </form>
+            </div>
+          </div>
+          
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Extraction Result</h3></div>
+          <div class="card-body">
+            <% if(result){ %>
+            <% if(result.error){ %><div class="alert alert-danger"><%= result.error %></div>
+            <% } else { %>
+            <% if(result.flag){ %><div style="margin-bottom:12px;font-family:monospace;font-size:12px;color:var(--danger);padding:10px;background:var(--danger-bg);border-radius:var(--radius);">🚩 <%= result.flag %></div><% } %>
+            <table style="font-size:12px;width:100%;">
+              <tr><td style="color:var(--text-muted);padding:4px 0;">Upload</td><td><%= result.filename %></td></tr>
+              <tr><td style="color:var(--text-muted);padding:4px 0;">Extract to</td><td><code><%= result.extract_dir %></code></td></tr>
+            </table>
+            <div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Simulated Files in Archive</div>
+            <% result.simulated_files.forEach(f => { %>
+            <div style="padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span><%= f.escapes_dir ? '⚠️' : '✅' %></span>
+                <code><%= f.name %></code>
+              </div>
+              <div style="font-size:11px;color:<%= f.escapes_dir?'var(--danger)':'var(--success)' %>;margin-left:22px;">→ <%= f.resolved_path %><%= f.escapes_dir ? ' (ESCAPES EXTRACT DIR!)' : '' %></div>
+            </div>
+            <% }) %>
+            <% } %>
+            <% } else { %><div style="color:var(--text-muted);text-align:center;padding:32px;">Upload a ZIP to see extraction simulation.</div><% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>

@@ -1,0 +1,56 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header">
+    <span class="header-title">Employee Directory</span>
+    <div class="header-right">
+      <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="page-header">
+      <h1>Syntex Solutions — Team Directory</h1>
+      <p>Internal employee directory. Search by name, department, or role.</p>
+    </div>
+    <!-- VULNERABILITY: salary, ssn_last4, internal_notes all returned in HTML source -->
+    <!-- Real bug: this page exposes sensitive HR data to all authenticated users -->
+    <div class="card">
+      <div class="card-header">
+        <h3>All Employees</h3>
+        <input type="text" id="search" placeholder="Search name or department..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;width:220px;" oninput="filter()">
+      </div>
+      <div class="table-wrapper">
+        <table id="emp-table">
+          <thead><tr><th>Name</th><th>Department</th><th>Title</th><th>Email</th><th>Phone</th><th>Location</th><th>Access</th></tr></thead>
+          <tbody>
+            <% employees.forEach(e => { %>
+            <tr data-search="<%= (e.full_name+e.department+e.job_title).toLowerCase() %>">
+              <td style="font-weight:600;"><%= e.full_name %>
+                <% if(!e.is_active){ %><span class="badge badge-danger" style="font-size:10px;">TERMINATED</span><% } %>
+              </td>
+              <td><span class="badge badge-gray" style="font-size:11px;"><%= e.department %></span></td>
+              <td style="font-size:12px;"><%= e.job_title %></td>
+              <td style="font-size:12px;"><a href="mailto:<%= e.email %>" style="color:var(--accent);"><%= e.email %></a></td>
+              <td style="font-size:12px;"><%= e.phone %></td>
+              <td style="font-size:12px;color:var(--text-muted);"><%= e.location %></td>
+              <td><span class="badge badge-<%= {admin:'danger',developer:'warning',finance:'info',revoked:'danger',support:'gray'}[e.access_level]||'gray' %>" style="font-size:10px;"><%= e.access_level %></span></td>
+            </tr>
+            <!-- VULNERABILITY: Sensitive data hidden in HTML comments — discoverable via view-source -->
+            <!-- salary: $<%= e.salary?.toLocaleString()||'N/A' %> | ssn_last4: <%= e.ssn_last4||'N/A' %> | notes: <%= e.internal_notes||'' %> -->
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+function filter() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('#emp-table tbody tr').forEach(r => {
+    r.style.display = r.dataset.search.includes(q) ? '' : 'none';
+  });
+}
+</script>

@@ -1,0 +1,45 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header"><span class="header-title">Avatar Image Processor</span>
+    <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+  </div>
+  <div class="page-body">
+    <div class="page-header"><h1>🔴 Hard — Image Processing Secondary Context</h1><p>Simulates ImageMagick-style secondary context RCE (CVE-2016-3714 / "ImageTragick" pattern).</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;align-items:start;">
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>Process Image</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label>Filename to Process</label>
+              <input type="text" id="filename" placeholder="avatar.jpg" style="font-family:monospace;">
+            </div>
+            <button onclick="processImage()" class="btn btn-primary" style="width:100%;">Process Image</button>
+          </div>
+        </div>
+        
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>Processing Pipeline Result</h3></div>
+          <div id="result" style="font-size:11px;padding:14px;min-height:160px;background:var(--page-bg);border-radius:var(--radius);border:1px solid var(--border);white-space:pre-wrap;">Process an image to see the pipeline...</div>
+        </div>
+        <div class="card mt-3">
+          <div class="card-header"><h3>Real-World Reference</h3></div>
+          <div class="card-body" style="font-size:12px;color:var(--text-muted);">
+            <p><strong>CVE-2016-3714</strong> ("ImageTragick") — ImageMagick's coder system allowed MVG/MSL files disguised as images to execute arbitrary commands during processing. The application code that handled the upload was fine; the SECONDARY processing library was the vulnerable surface.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+function setFilename(v) { document.getElementById('filename').value = v; }
+async function processImage() {
+  const filename = document.getElementById('filename').value;
+  const r = await fetch('/image-resize', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename}) });
+  const d = await r.json();
+  document.getElementById('result').textContent = JSON.stringify(d, null, 2);
+}
+</script>

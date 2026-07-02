@@ -1,0 +1,52 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header"><span class="header-title">Invoice PDF Export</span>
+    <div class="header-right"><a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a></div>
+  </div>
+  <div class="page-body">
+    <div class="page-header"><h1>Generate Invoice PDF</h1><p>Add custom notes to your invoice before exporting to PDF (rendered server-side via headless browser).</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;align-items:start;">
+      <div>
+        <div class="card">
+          <div class="card-header"><h3>🟡 Medium — Secondary Rendering Context</h3></div>
+          <div class="card-body">
+            <form action="/pdf-export" method="POST">
+              <div class="form-group"><label>Invoice Notes</label>
+                <textarea name="invoice_notes" rows="6" placeholder="Add any notes for this invoice...">Thank you for your business!</textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Generate PDF</button>
+            </form>
+          </div>
+        </div>
+        
+      </div>
+      <div>
+        <% if(result){ %>
+        <div class="card" style="border-color:<%= result.vulnerable_context?'var(--danger)':'var(--success)' %>;">
+          <div class="card-header"><h3><%= result.vulnerable_context?'⚠️ Vulnerable Context Triggered':'✅ Safe Render' %></h3></div>
+          <div class="card-body">
+            <% if(result.flag){ %>
+            <div style="font-family:monospace;font-size:12px;color:var(--success);padding:10px;background:var(--success-bg);border-radius:var(--radius);margin-bottom:10px;">🚩 <%= result.flag %></div>
+            <% } %>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"><%= result.note %></p>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">Server-side rendered HTML (sent to headless browser):</div>
+            <pre style="font-size:11px;background:var(--page-bg);padding:10px;border-radius:var(--radius);"><%= result.html %></pre>
+          </div>
+        </div>
+        <% } else { %>
+        <div class="card"><div class="card-body" style="text-align:center;color:var(--text-muted);padding:32px;">Generate a PDF to see the rendering context.</div></div>
+        <% } %>
+        <div class="card mt-3">
+          <div class="card-header"><h3>Why "Secondary Context"?</h3></div>
+          <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+            <p>The main web app might sanitise input correctly. But the SAME data gets reused later in a different rendering pipeline (PDF generator, image converter, email template) that has its own — often weaker — parsing rules. This second context is frequently overlooked in pentests.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><%- include('../partials/footer') %>
+<script>
+function setNotes(text) { document.querySelector('textarea[name=invoice_notes]').value = text; }
+</script>

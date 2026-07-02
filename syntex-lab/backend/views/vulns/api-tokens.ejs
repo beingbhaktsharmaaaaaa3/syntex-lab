@@ -1,0 +1,58 @@
+<%- include('../partials/navbar') %>
+<main class="main-content">
+  <div class="top-header">
+    <span class="header-title">API Tokens</span>
+    <div class="header-right">
+      <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="page-header">
+      <h1>API Token Management</h1>
+      <p>Manage API keys for your integrations.</p>
+    </div>
+    <!-- VULNERABILITY: Returns ALL users' tokens including admin and devops keys -->
+    <div class="card">
+      <div class="card-header"><h3>All API Tokens</h3></div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Name</th><th>Token</th><th>Scope</th><th>Expires</th><th>Status</th></tr></thead>
+          <tbody>
+            <% tokens.forEach(t => { %>
+            <%
+              const now     = new Date();
+              const exp     = new Date(t.expires_at);
+              const expired = exp < now;
+              const isTest  = t.token && t.token.includes('TEST');
+              const isOld   = t.name && t.name.includes('2023');
+            %>
+            <tr style="<%= isTest||isOld?'background:var(--warning-bg);':'' %>">
+              <td>
+                <div style="font-weight:600;font-size:13px;"><%= t.name %>
+                  <% if(isTest){ %><span class="badge badge-warning" style="font-size:10px;">TEST IN PROD ⚠️</span><% } %>
+                  <% if(isOld){ %><span class="badge badge-warning" style="font-size:10px;">DEPRECATED</span><% } %>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);">user_id: <%= t.user_id %></div>
+              </td>
+              <!-- VULNERABILITY: Full token value exposed -->
+              <td style="font-family:monospace;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= t.token %>">
+                <span style="color:var(--accent);cursor:pointer;" onclick="navigator.clipboard.writeText('<%= t.token %>')"><%= t.token %></span>
+              </td>
+              <td style="font-size:11px;max-width:180px;word-break:break-all;"><%= t.scope %></td>
+              <td style="font-size:11px;color:<%= expired?'var(--danger)':'var(--text-muted)' %>;">
+                <%= t.expires_at ? new Date(t.expires_at).toLocaleDateString() : '—' %>
+                <% if(expired){ %><span class="badge badge-danger" style="font-size:9px;">EXPIRED</span><% } %>
+              </td>
+              <td><span class="badge badge-<%= t.is_revoked?'danger':expired?'warning':'success' %>">
+                <%= t.is_revoked?'Revoked':expired?'Expired':'Active' %>
+              </span></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+  </div>
+</main>
+</div><%- include('../partials/footer') %>

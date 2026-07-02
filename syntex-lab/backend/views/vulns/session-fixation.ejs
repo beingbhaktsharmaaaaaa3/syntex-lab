@@ -1,0 +1,36 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Login (Session Fixation Demo)</span></div>
+    <div class="page-body">
+      <div style="max-width:460px;">
+        <% if(locals.flag){ %>
+        <div style="margin-bottom:16px;background:var(--danger-bg);border:1px solid var(--danger);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:13px;color:var(--danger);">🚩 <%= flag %></div>
+        <% } %>
+        <div class="card">
+          <div class="card-header"><h3><%= loggedIn ? '✅ Logged In' : 'Sign In' %></h3></div>
+          <div class="card-body">
+            <% if (!loggedIn) { %>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Current Session ID: <code><%= sessionId %></code></div>
+            <% if(locals.error){ %><div class="alert alert-danger"><%= error %></div><% } %>
+            <form action="/login-v2" method="POST">
+              <div class="form-group"><label>Username</label><input type="text" name="username" required></div>
+              <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+              <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+            <% } else { %>
+            <p>Logged in as <strong><%= user.username %></strong></p>
+            <div style="font-size:12px;margin-top:12px;padding:12px;background:var(--page-bg);border-radius:var(--radius);">
+              <div>Session before login: <code><%= oldSessionId %></code></div>
+              <div style="margin-top:4px;">Session after login:  <code><%= sessionId %></code></div>
+              <div style="margin-top:8px;font-weight:700;color:<%= sameSession ? 'var(--danger)' : 'var(--success)' %>;">
+                <%= sameSession ? '⚠️ VULNERABLE: Same session ID — fixation possible' : '✅ Session rotated' %>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>

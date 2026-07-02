@@ -1,0 +1,32 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header"><span class="header-title">Password Reset</span></div>
+    <div class="page-body">
+      <div class="page-header"><h1>Reset Your Password</h1><p>Enter your email address to receive a reset link.</p></div>
+      <div style="max-width:500px;">
+        <div class="card">
+          <div class="card-body">
+            <% if (!sent) { %>
+            <form action="/forgot-password-v2" method="POST">
+              <div class="form-group"><label>Email Address</label><input type="email" name="email" required placeholder="you@company.com"></div>
+              <button type="submit" class="btn btn-primary">Send Reset Link</button>
+            </form>
+            <% } else { %>
+            <div class="alert alert-success">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Reset link sent (simulated). Check below in lab mode.
+            </div>
+            
+              <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+                Attack: set <code>Host: attacker.com</code> header → victim clicks link to attacker's server with valid reset token.
+              </div>
+            </div>
+            <% } %>
+            <% } %>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </main>
+</div><%- include('../partials/footer') %>

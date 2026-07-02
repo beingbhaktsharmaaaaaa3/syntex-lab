@@ -1,0 +1,67 @@
+<%- include('../partials/navbar') %>
+  <main class="main-content">
+    <div class="top-header">
+      <span class="header-title">Email Template Preview</span>
+      <div class="header-right">
+        <a href="/profile/<%= user.id %>" class="header-user"><div class="header-avatar"><%= ((user.first_name||user.username).charAt(0)).toUpperCase() %></div></a>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="page-header">
+        <h1>Email Template Preview</h1>
+        <p>Preview your email template before sending it to customers. Supports dynamic variables.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+        <div>
+          <div class="card">
+            <div class="card-header"><h3>Template Editor</h3></div>
+            <div class="card-body">
+              <form action="/template-preview" method="POST">
+                <div class="form-group">
+                  <label>Template Content</label>
+                  <textarea name="template" rows="12" style="font-family:monospace;font-size:12px;" placeholder="Enter your EJS template here..."><%= template || 'Hello <%= user.username %>,\n\nThank you for using Syntex Solutions.\n\nBest,\n<%= company %>' %></textarea>
+                  <div class="form-hint">Supports EJS syntax: &lt;%= variable %&gt; and &lt;% code %&gt;</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button type="submit" class="btn btn-primary">Preview Template</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Example payloads (visible in beginner mode) -->
+          
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-header"><h3>Preview Output</h3></div>
+            <div class="card-body">
+              <% if (error) { %>
+              <div class="alert alert-danger"><%= error %></div>
+              <% } else if (output !== null) { %>
+              <div style="background:var(--page-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:monospace;font-size:13px;white-space:pre-wrap;min-height:100px;"><%= output %></div>
+              <% } else { %>
+              <div style="color:var(--text-muted);font-size:13px;padding:24px;text-align:center;">Template output will appear here after preview.</div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px;">
+            <div class="card-header"><h3>Available Variables</h3></div>
+            <div class="card-body" style="font-size:12px;">
+              <table style="width:100%;">
+                <tr><td style="padding:4px 0;color:var(--text-muted);">user.username</td><td style="font-weight:600;"><%= user.username %></td></tr>
+                <tr><td style="padding:4px 0;color:var(--text-muted);">user.email</td><td style="font-weight:600;"><%= user.email %></td></tr>
+                <tr><td style="padding:4px 0;color:var(--text-muted);">company</td><td style="font-weight:600;">Syntex Solutions</td></tr>
+                <tr><td style="padding:4px 0;color:var(--text-muted);">year</td><td style="font-weight:600;"><%= new Date().getFullYear() %></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<%- include('../partials/footer') %>
