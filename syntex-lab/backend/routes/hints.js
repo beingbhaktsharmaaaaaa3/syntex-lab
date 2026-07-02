@@ -184,15 +184,30 @@ router.get('/:slug', requireAuth, async (req, res) => {
     const hint = HINTS[slug];
     if (!hint) return res.status(404).render('404', { title:'404', user:req.session.user });
 
-    const uid = req.session.userId;
+    const uid  = req.session.userId;
+    const mode = require('../middleware/program').getLabMode();
+    const isFree = mode === 'beginner'; // beginner = all 3 levels visible immediately
+
     const unlocked = await db.query(
         `SELECT level FROM hint_unlocks WHERE user_id=$1 AND vuln_slug=$2 ORDER BY level`, [uid, slug]
     );
-    const unlockedLevels = unlocked.rows.map(r => r.level);
+    let unlockedLevels = unlocked.rows.map(r => r.level);
+
+    // In beginner mode auto-unlock all levels (no clicking required)
+    if (isFree) {
+        unlockedLevels = [1, 2, 3];
+        await db.query(
+            `INSERT INTO hint_unlocks (user_id, vuln_slug, level)
+             SELECT $1,$2,lvl FROM generate_series(1,3) AS lvl
+             ON CONFLICT DO NOTHING`,
+            [uid, slug]
+        ).catch(() => {});
+    }
 
     res.render('program/hints-detail', {
         title: `Hints: ${hint.title}`,
         slug, hint, unlockedLevels,
+        isFree, mode,
         user: req.session.user,
     });
 });
@@ -204,10 +219,24 @@ router.post('/:slug/:level/unlock', requireAuth, async (req, res) => {
     const hint = HINTS[slug];
     if (!hint || lvl < 1 || lvl > hint.hints.length) return res.status(400).json({ error:'Invalid' });
 
+    const mode = require('../middleware/program').getLabMode();
+    const uid  = req.session.userId;
+
+    // In intermediate mode enforce sequential unlock
+    if (mode === 'intermediate' && lvl > 1) {
+        const prev = await db.query(
+            `SELECT 1 FROM hint_unlocks WHERE user_id=$1 AND vuln_slug=$2 AND level=$3`,
+            [uid, slug, lvl - 1]
+        );
+        if (!prev.rows.length) {
+            return res.redirect(`/program/hints/${slug}?error=unlock_previous_first`);
+        }
+    }
+
     await db.query(
         `INSERT INTO hint_unlocks (user_id, vuln_slug, level)
          VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-        [req.session.userId, slug, lvl]
+        [uid, slug, lvl]
     );
     res.redirect(`/program/hints/${slug}`);
 });
